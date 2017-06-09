@@ -1,0 +1,24 @@
+
+sample width: 	2
+nchannels:	2
+frame rate:	44100
+sample rate:	44100
+maximum freq:	20000
+sample period:	22.676 uS
+TC:		0.02321995464853
+FR:		43.06640624999272
+data len:	4096
+data2 len:	2048
+
+252/20
+
+100 : 1
+200 : 3
+400 : 6
+440 : 7
+500 : 8
+800 : 11
+1k  : 15
+1.25K MAX
+1.6K:
+10k : 16
