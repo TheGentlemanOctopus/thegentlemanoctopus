@@ -31,7 +31,7 @@ import numpy as np
 class PatternGenerator:
     def __init__(self,
         octopus,
-        queue,
+        queue=None,
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
