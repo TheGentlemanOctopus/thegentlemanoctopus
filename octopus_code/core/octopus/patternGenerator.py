@@ -38,6 +38,10 @@ class PatternGenerator:
         framerate = 20
     ):
         self.octopus = octopus
+
+        if not queue:
+            queue = Queue.Queue(1)
+
         self.queue = queue
 
         self.opc_host = opc_host
@@ -52,10 +56,20 @@ class PatternGenerator:
         if not self.client.can_connect():
             raise Exception("Could not connect to opc at " + opc_ip)
 
-        self.patterns = []
+        self.patterns = [RpcTestPattern()]
         self.current_pattern = []
 
         self.period = 1.0/framerate
+
+        # For frame loop
+        #Initialise data that's fed into patterns
+        pattern_input_data = self.default_pattern_input_data()
+        self.set_default_pattern()
+        
+        #For detecting keyboard presses
+        self.kb = kbHit.KBHit()
+
+    
 
     def default_pattern_input_data(self):
         return {
@@ -64,64 +78,68 @@ class PatternGenerator:
             "rhythm_channel": self.rhythm_channel
         }
 
-    def run(self):
-        if not self.patterns:
-            print "No patterns defined!"
-            return
-
-        #Initialise data that's fed into patterns
-        pattern_input_data = self.default_pattern_input_data()
-
-        #For detecting keyboard presses
-        kb = kbHit.KBHit()
-
+    def run(self, timeout=0):
         print "Sending pixels forever..."
 
-        self.set_default_pattern()
+        run_start = time.time()
 
-        #TODO: catch exceptions in this loop (right now, I like it crashes for debug)
         while True:
             loop_start = time.time()
 
-            # Handle Keyboard Input
-            if kb.kbhit():
-                key = kb.getch()
-                if key == 'q':
-                    break
-                elif key == 'w':
-                    pattern_index = self.previous_pattern()
-                elif key =='s':
-                    pattern_index = self.next_pattern()
-                elif self.nudge_param(key):
-                    self.print_status()
+            if self.update():
+                break
 
+            print "Thing: ", run_start - time.time()
 
-            # Read from data queue
-            if not self.queue.empty():
-                # Keep it clean and cleat
-               
-                with self.queue.mutex:
-                    eq = self.queue.queue[-1]
-                    self.queue.queue.clear() 
-
-                pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
-                pattern_input_data["level"] = np.mean(eq)
-
-            # Send some pixels
-            try:
-                self.current_pattern.next_frame(self.octopus, pattern_input_data)
-                self.client.put_pixels([pixel.color for pixel in self.octopus.pixels_zig_zag()], channel=1) 
-            except:
-                print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            if timeout and time.time() - run_start > timeout:
+                break
 
             loop_end = time.time() - loop_start
             time.sleep(max(0, self.period - loop_end))
+
+
+    def update(self):  
+        quit = False
+
+        # Handle Keyboard Input
+        if self.kb.kbhit():
+            key = self.kb.getch()
+            if key == 'q':
+                quit = True
+                return quit
+            elif key == 'w':
+                pattern_index = self.previous_pattern()
+            elif key =='s':
+                pattern_index = self.next_pattern()
+            elif self.nudge_param(key):
+                self.print_status()
+
+
+        # Read from data queue
+        if not self.queue.empty():
+            # Keep it clean and cleat
+           
+            with self.queue.mutex:
+                eq = self.queue.queue[-1]
+                self.queue.queue.clear() 
+
+            pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
+            pattern_input_data["level"] = np.mean(eq)
+
+        # Send some pixels
+        try:
+            self.current_pattern.next_frame(self.octopus, pattern_input_data)
+            self.client.put_pixels([pixel.color for pixel in self.octopus.pixels_zig_zag()], channel=1) 
+        except:
+            print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+
+        return quit
 
     def set_default_pattern(self):
         if self.patterns:
             self.set_current_pattern(0)
         else:
-            print "Cannot set default pattern, there are no patterns"
+            raise Exception("No patterns defined")
 
     def next_pattern(self):
         self.set_current_pattern(self.pattern_index() + 1)
@@ -270,6 +288,7 @@ class KeyMapping:
 
 if __name__ == '__main__':
 
+    #TODO Pretty args
     #Determine if using rpc or not
     use_rpc = False
 

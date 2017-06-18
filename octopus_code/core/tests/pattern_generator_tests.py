@@ -3,6 +3,10 @@ import core.octopus.patternGenerator as pg
 import core.octopus.layouts.octopus as octopus
 import core.octopus.opc
 
+import time
+
+from core.octopus.patterns.rpcTestPattern import RpcTestPattern
+
 # Standard library imports...
 from mock import patch, MagicMock
 
@@ -10,11 +14,19 @@ from mock import patch, MagicMock
 class TestPatternGeneratorMethods(unittest.TestCase):
 
     # Test OPC connection stuff
-    @patch("core.octopus.opc.Client")
-    def test_construction(self, opc_mock):
+    def setUp(self):
+        patcher = patch('core.octopus.opc.Client')
+        opc_mock = patcher.start()
         opc_mock.can_connect = MagicMock(return_value=True)
-        
-        pattern_generator = pg.PatternGenerator(octopus.ImportOctopus("./core/tests/test_octopus.json"))
+        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus("./core/tests/test_octopus.json"))
+
+    def test_contains_default_pattern(self):
+        self.assertTrue(len(self.pattern_generator.patterns) > 0)
+
+    def test_timeout(self, timeout=0.1):
+        start_time = time.time()
+        self.pattern_generator.run(timeout=timeout)
+        self.assertTrue(time.time() - start_time + timeout*0.01 > timeout)
 
 
 
