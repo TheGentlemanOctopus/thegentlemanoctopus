@@ -6,19 +6,24 @@ import core.octopus.opc
 import time
 
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
+from core.octopus.patterns.shambalaPattern import ShambalaPattern
+
 
 # Standard library imports...
 from mock import patch, MagicMock
 
+Testopus = "./core/tests/test_octopus.json" 
 
 class TestPatternGeneratorMethods(unittest.TestCase):
 
-    # Test OPC connection stuff
+    # Mock OPC connectionc
     def setUp(self):
         patcher = patch('core.octopus.opc.Client')
         opc_mock = patcher.start()
         opc_mock.can_connect = MagicMock(return_value=True)
-        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus("./core/tests/test_octopus.json"))
+        opc_mock.put_pixels = MagicMock()
+
+        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus))
 
     def test_contains_default_pattern(self):
         self.assertTrue(len(self.pattern_generator.patterns) > 0)
@@ -28,31 +33,17 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         self.pattern_generator.run(timeout=timeout)
         self.assertTrue(time.time() - start_time + timeout*0.01 > timeout)
 
+    def test_speed_shambala_pattern(self, run_time=5, framerate=20):
+        pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
+            framerate=framerate,
+            strict=True
+            )
 
+        pattern_generator.patterns = [ShambalaPattern()]
+        pattern_generator.run(timeout=run_time)
 
-
-
-    # Test UDP connection setuff
-
-    # Test Framerate?
-
-    # Exceptions from pattern generation
-
-
-
-    # def test_upper(self):
-    #     self.assertEqual('foo'.upper(), 'FOO')
-
-    # def test_isupper(self):
-    #     self.assertTrue('FOO'.isupper())
-    #     self.assertFalse('Foo'.isupper())
-
-    # def test_split(self):
-    #     s = 'hello world'
-    #     self.assertEqual(s.split(), ['hello', 'world'])
-    #     # check that s.split fails when the separator is not a string
-    #     with self.assertRaises(TypeError):
-    #         s.split(2)
+    def test_continues_on_pattern_exception(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

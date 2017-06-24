@@ -28,6 +28,8 @@ from core.octopus.rpcServer import RpcServer
 import numpy as np
 
 #Generate patterns and send to a OPC host
+#Strict throws exceptions if it cannot keep up
+#with framerates or if patterns are unstable
 class PatternGenerator:
     def __init__(self,
         octopus,
@@ -35,7 +37,8 @@ class PatternGenerator:
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
-        framerate = 20
+        framerate = 20,
+        strict=False
     ):
         self.octopus = octopus
 
@@ -61,9 +64,11 @@ class PatternGenerator:
 
         self.period = 1.0/framerate
 
+        self.strict = strict
+
         # For frame loop
         #Initialise data that's fed into patterns
-        pattern_input_data = self.default_pattern_input_data()
+        self.pattern_input_data = self.default_pattern_input_data()
         self.set_default_pattern()
         
         #For detecting keyboard presses
@@ -78,6 +83,7 @@ class PatternGenerator:
             "rhythm_channel": self.rhythm_channel
         }
 
+    #Strict framerate throws an exception if it cannot keep up  
     def run(self, timeout=0):
         print "Sending pixels forever..."
 
@@ -89,12 +95,15 @@ class PatternGenerator:
             if self.update():
                 break
 
-            print "Thing: ", run_start - time.time()
-
             if timeout and time.time() - run_start > timeout:
                 break
 
             loop_end = time.time() - loop_start
+            loop_time = self.period - loop_end
+
+            if self.strict and loop_time < 0:
+                raise Exception("Cannot keep up with framerate")
+
             time.sleep(max(0, self.period - loop_end))
 
 
@@ -123,15 +132,18 @@ class PatternGenerator:
                 eq = self.queue.queue[-1]
                 self.queue.queue.clear() 
 
-            pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
-            pattern_input_data["level"] = np.mean(eq)
+            self.pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
+            self.pattern_input_data["level"] = np.mean(eq)
 
         # Send some pixels
         try:
-            self.current_pattern.next_frame(self.octopus, pattern_input_data)
+            self.current_pattern.next_frame(self.octopus, self.pattern_input_data)
             self.client.put_pixels([pixel.color for pixel in self.octopus.pixels_zig_zag()], channel=1) 
         except:
-            print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            if self.strict:
+                raise Exception("Pattern throwing exceptions")
+            else:
+                print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
 
         return quit
 
