@@ -37,7 +37,6 @@ class TestPatternGeneratorMethods(unittest.TestCase):
     def test_speed_shambala_pattern(self, run_time=5, framerate=20):
         pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
-            strict=True
             )
 
         run_start = time.time()

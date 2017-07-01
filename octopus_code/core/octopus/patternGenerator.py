@@ -37,8 +37,7 @@ class PatternGenerator:
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
-        framerate = 20,
-        strict=False
+        framerate = 20
     ):
         self.octopus = octopus
 
@@ -64,7 +63,6 @@ class PatternGenerator:
 
         self.period = 1.0/framerate
 
-        self.strict = strict
 
         # For frame loop
         #Initialise data that's fed into patterns
@@ -83,7 +81,6 @@ class PatternGenerator:
             "rhythm_channel": self.rhythm_channel
         }
 
-    #Strict framerate throws an exception if it cannot keep up  
     def run(self, timeout=0):
         print "Sending pixels forever..."
 
@@ -92,17 +89,17 @@ class PatternGenerator:
         while True:
             loop_start = time.time()
 
-            if self.update():
-                break
+            try:
+                if self.update():
+                    break
+            except Exception as e:
+                print e
 
             if timeout and time.time() - run_start > timeout:
                 break
 
             loop_end = time.time() - loop_start
             loop_time = self.period - loop_end
-
-            if self.strict and loop_time < 0:
-                raise Exception("Cannot keep up with framerate")
 
             time.sleep(max(0, self.period - loop_end))
 
@@ -140,10 +137,7 @@ class PatternGenerator:
             self.current_pattern.next_frame(self.octopus, self.pattern_input_data)
             self.client.put_pixels([pixel.color for pixel in self.octopus.pixels_zig_zag()], channel=1) 
         except:
-            if self.strict:
-                raise Exception("Pattern throwing exceptions")
-            else:
-                print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            raise Exception("WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions")
 
         return quit
 
