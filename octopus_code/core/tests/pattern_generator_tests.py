@@ -24,7 +24,7 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         opc_mock.can_connect = MagicMock(return_value=True)
         opc_mock.put_pixels = MagicMock()
 
-        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus))
+        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), enable_status_monitor=False)
 
     def test_contains_default_pattern(self):
         self.assertTrue(len(self.pattern_generator.patterns) > 0)
@@ -37,23 +37,24 @@ class TestPatternGeneratorMethods(unittest.TestCase):
     def test_speed_shambala_pattern(self, run_time=5, framerate=20):
         pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
+            enable_status_monitor=False
             )
 
         run_start = time.time()
-        loop_times = []
+        rates = []
 
         while time.time() - run_start < run_time:
             loop_start = time.time()
 
-            if pattern_generator.update():
-                raise Exception(pattern_generator.current_pattern.__class__.__name__ + "Threw an Exception")
+            pattern_generator.update()
 
-            loop_end = time.time() - loop_start
-            loop_times.append(loop_end)
+            loop_time = time.time() - loop_start
+            rate = 1.0/loop_time
+            rates.append(rate)
 
-        mean_rate = 1.0/np.mean(loop_times)
-        min_rate = 1.0/np.max(loop_times)
-        max_rate = 1.0/np.min(loop_times)
+        mean_rate = np.mean(rates)
+        min_rate = np.min(rates)
+        max_rate = np.max(rates)
 
         print "Mean Rate", mean_rate
         print "Min Rate", min_rate

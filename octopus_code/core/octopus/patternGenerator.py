@@ -37,7 +37,8 @@ class PatternGenerator:
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
-        framerate = 20
+        framerate = 20,
+        enable_status_monitor=True
     ):
         self.octopus = octopus
 
@@ -62,7 +63,7 @@ class PatternGenerator:
         self.current_pattern = []
 
         self.period = 1.0/framerate
-
+        self.enable_status_monitor = enable_status_monitor
 
         # For frame loop
         #Initialise data that's fed into patterns
@@ -70,9 +71,7 @@ class PatternGenerator:
         self.set_default_pattern()
         
         #For detecting keyboard presses
-        self.kb = kbHit.KBHit()
-
-    
+        self.kb = kbHit.KBHit()    
 
     def default_pattern_input_data(self):
         return {
@@ -82,49 +81,58 @@ class PatternGenerator:
         }
 
     def run(self, timeout=0):
-        print "Sending pixels forever..."
+        if self.enable_status_monitor:
+            if timeout:
+                print "Generating patterns forever!"
+            else:
+                print "Generating pattern for", timeout, "seconds"
 
         run_start = time.time()
 
-        while True:
+        # 0 Means forever-and-ever-and-ever
+        if not timeout:
+            timeout = float("inf")
+
+        # Generate the patterns
+        while time.time() - run_start < timeout:
             loop_start = time.time()
 
             try:
-                if self.update():
+                pixels = self.update()
+                
+                if not pixels:
                     break
+
+                self.client.put_pixels(pixels, channel=1)
+
             except Exception as e:
                 print e
-
-            if timeout and time.time() - run_start > timeout:
-                break
 
             loop_end = time.time() - loop_start
             loop_time = self.period - loop_end
 
+            # Sleep to give time for other processes
             time.sleep(max(0, self.period - loop_end))
 
 
-    def update(self):  
-        quit = False
-
+    #Returns None if we should quit
+    def update(self):
         # Handle Keyboard Input
         if self.kb.kbhit():
             key = self.kb.getch()
             if key == 'q':
-                quit = True
-                return quit
+                return None
             elif key == 'w':
                 pattern_index = self.previous_pattern()
             elif key =='s':
                 pattern_index = self.next_pattern()
             elif self.nudge_param(key):
-                self.print_status()
-
+                if self.enable_status_monitor:
+                    self.print_status()
 
         # Read from data queue
         if not self.queue.empty():
-            # Keep it clean and cleat
-           
+            # Keep it clean and clear
             with self.queue.mutex:
                 eq = self.queue.queue[-1]
                 self.queue.queue.clear() 
@@ -135,11 +143,11 @@ class PatternGenerator:
         # Send some pixels
         try:
             self.current_pattern.next_frame(self.octopus, self.pattern_input_data)
-            self.client.put_pixels([pixel.color for pixel in self.octopus.pixels_zig_zag()], channel=1) 
+            pixels = [pixel.color for pixel in self.octopus.pixels_zig_zag()]
         except:
             raise Exception("WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions")
 
-        return quit
+        return pixels
 
     def set_default_pattern(self):
         if self.patterns:
@@ -193,7 +201,8 @@ class PatternGenerator:
             self.key_mappings.append(KeyMapping(name, keys[0], keys[1], param))
 
         # Update message
-        self.print_status()
+        if self.enable_status_monitor:
+            self.print_status()
 
         return index
 
