@@ -5,9 +5,10 @@ import core.octopus.opc
 
 import time
 
+import numpy as np
+
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
-
 
 # Standard library imports...
 from mock import patch, MagicMock
@@ -39,8 +40,26 @@ class TestPatternGeneratorMethods(unittest.TestCase):
             strict=True
             )
 
-        pattern_generator.patterns = [ShambalaPattern()]
-        pattern_generator.run(timeout=run_time)
+        run_start = time.time()
+        loop_times = []
+
+        while time.time() - run_start < run_time:
+            loop_start = time.time()
+
+            if pattern_generator.update():
+                raise Exception(pattern_generator.current_pattern.__class__.__name__ + "Threw an Exception")
+
+            loop_end = time.time() - loop_start
+            loop_times.append(loop_end)
+
+        mean_rate = 1.0/np.mean(loop_times)
+        min_rate = 1.0/np.max(loop_times)
+        max_rate = 1.0/np.min(loop_times)
+
+        print "Mean Rate", mean_rate
+        print "Min Rate", min_rate
+        print "Max Rate", max_rate
+
 
     def test_continues_on_pattern_exception(self):
         pass
