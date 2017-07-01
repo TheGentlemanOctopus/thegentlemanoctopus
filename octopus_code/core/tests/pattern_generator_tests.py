@@ -35,10 +35,17 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         self.assertTrue(time.time() - start_time + timeout*0.01 > timeout)
 
     def test_speed_shambala_pattern(self, run_time=5, framerate=20):
+        pattern = ShambalaPattern()
+        print "Testing", pattern.__class__.__name__
+        self.pattern_speed_tester(pattern, run_time, framerate)
+
+    def pattern_speed_tester(self, pattern, run_time, framerate):
         pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
             enable_status_monitor=False
             )
+
+        pattern_generator.patterns = [pattern]
 
         run_start = time.time()
         rates = []
@@ -59,6 +66,8 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         print "Mean Rate", mean_rate
         print "Min Rate", min_rate
         print "Max Rate", max_rate
+
+        #TODO: Test CPU / RAM
 
 
     def test_continues_on_pattern_exception(self):
