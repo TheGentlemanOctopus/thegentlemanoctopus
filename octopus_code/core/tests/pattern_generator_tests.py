@@ -63,9 +63,7 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         min_rate = np.min(rates)
         max_rate = np.max(rates)
 
-        print "Mean Rate", mean_rate
-        print "Min Rate", min_rate
-        print "Max Rate", max_rate
+        print "Framerate", mean_rate, "(", min_rate, "/", max_rate, ")"
 
         #TODO: Test CPU / RAM
 
