@@ -78,10 +78,9 @@ class IntegrationTest:
                 mem = process.memory_percent()
                 cpu = self.get_cpu()
 
-                # if self.pattern_generator.current_pattern is ShambalaPattern:
-                #     pattern_name = self.pattern_generator.current_pattern.
+                status = self.pattern_generator.current_pattern.status()
 
-                IntegrationTestData(t, rate, cpu, mem, "").save(test_file)
+                IntegrationTestData(t, rate, cpu, mem, status).save(test_file)
 
             print "\n"
 
@@ -104,7 +103,7 @@ class IntegrationTest:
             cpu_percent = psutil.cpu_percent(interval=0.3)
 
             with self.lock:
-                self.cpu_percent
+                self.cpu_percent = cpu_percent
 
     def get_cpu(self):
         with self.lock:
@@ -124,6 +123,10 @@ def print_results(filename):
     print "Max mem", np.max(mem)
     print "Max CPU", np.max(cpu)
 
+# TODO: Put this in utils?
+def plot_dashes(x_locations):
+    for x in x_locations:
+        plt.axvline(x, color='k', linestyle='dashed', linewidth=1)
 
 def plot_results(filename):
     results = integrationTestData.load_csv(filename)
@@ -132,25 +135,50 @@ def plot_results(filename):
     framerate = [result.framerate for result in results]
     mem = [result.mem for result in results]
     cpu = [result.cpu for result in results]
+    names = [result.pattern_name for result in results]
 
+    dashes=[]
+    for i, name in enumerate(names[:-1]):
+        if name != names[i-1]:
+            dashes.append(t[i])
 
-    plt.subplot(3, 1, 1)
+    unique_names = np.unique(names).tolist()
+
+    num_plots = 4
+    plt.subplot(num_plots, 1, 1)
+    plot_dashes(dashes)
     plt.plot(t, framerate)
     plt.title('Framerate')
     plt.xlabel('Time (s)')
     plt.ylabel('Framerate')
 
-    plt.subplot(3, 1, 2)
+
+    plt.subplot(num_plots, 1, 2)
+    plot_dashes(dashes)
     plt.plot(t, mem)
     plt.title('Memory Usage')
     plt.xlabel('Time (s)')
     plt.ylabel('Memory (Mb)')
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(num_plots, 1, 3)
+    plot_dashes(dashes)
+    plt.plot(t, cpu)
     plt.title('CPU Usage')
     plt.xlabel('Time (s)')
     plt.ylabel('CPU %')
     plt.ylim([0, 100])
+
+    plt.subplot(num_plots, 1, 4)
+    
+    
+    pos = [unique_names.index(name) for name in names]
+    plot_dashes(dashes)
+    plt.scatter(t, pos, c=pos, s=100)
+    plt.title('Selected Pattern')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Pattern')
+    plt.gca().yaxis.grid(True)
+    plt.yticks(range(len(unique_names)), unique_names)
 
     print_results(filename)
 

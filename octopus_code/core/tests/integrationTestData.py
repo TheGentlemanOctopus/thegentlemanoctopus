@@ -3,10 +3,10 @@ import csv
 
 class IntegrationTestData:
     def __init__(self, t, framerate, cpu, mem, pattern_name):
-        self.t = t
-        self.framerate = framerate
-        self.cpu = cpu
-        self.mem = mem
+        self.t = float(t)
+        self.framerate = float(framerate)
+        self.cpu = float(cpu)
+        self.mem = float(mem)
         self.pattern_name = pattern_name
 
     # This should be saved in the order of the constructors input args
@@ -19,4 +19,4 @@ class IntegrationTestData:
 def load_csv(filename):
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
-        return [IntegrationTestData(*[float(x) for x in row]) for row in csvreader]
+        return [IntegrationTestData(*row) for row in csvreader]
