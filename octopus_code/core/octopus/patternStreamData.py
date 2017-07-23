@@ -29,7 +29,6 @@ if __name__ == '__main__':
     start_time = time.time()
     print ""
     while time.time() - start_time < 5:
-        print "\r"
         pattern_stream_data.siney_time()
 
         count = 0

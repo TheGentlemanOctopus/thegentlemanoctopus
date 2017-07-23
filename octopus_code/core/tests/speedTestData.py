@@ -16,10 +16,6 @@ class SpeedTestData:
 
 # Retruns a list of SpeedTestData objects
 def load_csv(filename):
-    testData = []
-
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
         return [SpeedTestData(*row) for row in csvreader]
-
-    return testData

@@ -17,6 +17,7 @@ from core.octopus.patterns.rainbowPlaidEqPattern import RainbowPlaidEqPattern
 from core.octopus.patterns.spiralOutFast import SpiralOutFast
 from core.octopus.patterns.spiralInFast import SpiralInFast
 
+from core.octopus.patternStreamData import PatternStreamData
 
 from core.octopus.patterns.lavaLampPattern import LavaLampPattern
 
@@ -38,7 +39,8 @@ class PatternGenerator:
         opc_port=7890,
         rhythm_channel = 0,
         framerate = 20,
-        enable_status_monitor=True
+        enable_status_monitor=True,
+        queue_receive_timeout=10
     ):
         self.octopus = octopus
 
@@ -46,6 +48,7 @@ class PatternGenerator:
             queue = Queue.Queue(1)
 
         self.queue = queue
+        self.queue_last_receive = time.time()
 
         self.opc_host = opc_host
         self.opc_port = opc_port
@@ -65,20 +68,12 @@ class PatternGenerator:
         self.period = 1.0/framerate
         self.enable_status_monitor = enable_status_monitor
 
-        # For frame loop
         #Initialise data that's fed into patterns
-        self.pattern_input_data = self.default_pattern_input_data()
+        self.pattern_stream_data = PatternStreamData()
         self.set_default_pattern()
         
         #For detecting keyboard presses
         self.kb = kbHit.KBHit()    
-
-    def default_pattern_input_data(self):
-        return {
-            "level": 0,
-            "eq": (0,0,0,0,0,0,0), # 7 band
-            "rhythm_channel": self.rhythm_channel
-        }
 
     def run(self, timeout=0):
         if self.enable_status_monitor:
@@ -137,8 +132,11 @@ class PatternGenerator:
                 eq = self.queue.queue[-1]
                 self.queue.queue.clear() 
 
-            self.pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
-            self.pattern_input_data["level"] = np.mean(eq)
+            # TODO: Set bit depth somewhere
+            self.pattern_input_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
+            self.queue_last_receive = time.time()
+
+
 
         # Send some pixels
         try:
