@@ -35,7 +35,8 @@ class IntegrationTest:
     def __init__(self, framerate = 20):
         self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
-            enable_status_monitor=False
+            enable_status_monitor=False,
+            patterns = [ShambalaPattern()]
         )
 
         # Start the cpu meter
@@ -45,9 +46,7 @@ class IntegrationTest:
         thread.daemon = True
         thread.start()
 
-    def run(self, pattern, run_time=10): 
-        self.pattern_generator.patterns = [pattern]
-        
+    def run(self, pattern, run_time=10):        
         run_start = time.time()
         process = psutil.Process(os.getpid())
         test_file = open(Test_File, "w")
@@ -174,7 +173,7 @@ if __name__ == '__main__':
 
     if args.mode == "test":
         integration_test = IntegrationTest()
-        integration_test.run(RpcTestPattern(), run_time=args.t)
+        integration_test.run(ShambalaPattern(), run_time=args.t)
 
     elif args.mode == "plot":
         if not plotting:

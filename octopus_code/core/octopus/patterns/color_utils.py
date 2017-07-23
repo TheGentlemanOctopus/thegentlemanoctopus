@@ -10,7 +10,7 @@ pi_16 = np.float16(np.pi)
 
 lookup_len = 256
 two = np.float16(2)
-cos_rescale = np.float16(lookup_len / (two*pi_16))
+cos_rescale = np.float16((lookup_len-1) / (two*pi_16))
 cos_lookup_table = np.zeros(lookup_len, dtype=np.float16)
 for i in range(lookup_len):
     cos_lookup_table[i] = np.float16(np.cos(2*np.pi*i/lookup_len))
@@ -37,7 +37,6 @@ def cos_lookup(x, offset=0, period=6.28318, minn=-1, maxx=1):
     maxx=np.float16(maxx)
     minn=np.float16(minn)
 
-    #TODO: 40 should not be hardcoded really
     cos_arg = (cos_rescale*(((x/np.float16(period) - np.float16(offset)) * pi_16 * two) % (two*pi_16)))
 
     if type(cos_arg).__module__ == np.__name__:

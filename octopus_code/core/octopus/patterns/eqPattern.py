@@ -21,7 +21,7 @@ class EqPattern(Pattern):
         meter_color = self.meter_color()
         background_color = self.background_color()
 
-        eq = itertools.cycle(data["eq"])
+        eq = itertools.cycle(data.eq)
 
         for leg in octopus.legs:
             level = next(eq)

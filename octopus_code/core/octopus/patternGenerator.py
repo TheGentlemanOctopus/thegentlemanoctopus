@@ -40,7 +40,8 @@ class PatternGenerator:
         rhythm_channel = 0,
         framerate = 20,
         enable_status_monitor=True,
-        queue_receive_timeout=10
+        queue_receive_timeout=10,
+        patterns = None
     ):
         self.octopus = octopus
 
@@ -63,8 +64,10 @@ class PatternGenerator:
         if not self.client.can_connect():
             raise Exception("Could not connect to opc at " + opc_ip)
 
-        self.patterns = [RpcTestPattern()]
-        self.current_pattern = []
+        if not patterns:
+            self.patterns = [RpcTestPattern()]
+        else:
+            self.patterns = patterns
 
         self.period = 1.0/framerate
         self.enable_status_monitor = enable_status_monitor
@@ -146,6 +149,7 @@ class PatternGenerator:
 
         self.client.put_pixels(pixels, channel=1)
 
+    # TODO: Delete this silly function?
     def set_default_pattern(self):
         if self.patterns:
             self.set_current_pattern(0)

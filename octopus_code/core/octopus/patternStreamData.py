@@ -11,7 +11,7 @@ class PatternStreamData:
 
     def set_eq(self, eq):
         self.eq = eq
-        self.level = np.mean(eq)
+        self.level = eq[self.rhythm_channel]
 
     def siney_time(self, frequency=1.0/5):
         t = time.time()
@@ -21,6 +21,7 @@ class PatternStreamData:
         eq = tuple(0.5+0.5*np.sin(2*np.pi*freqs*t + phase))
         
         self.set_eq(eq)
+
 
 # Siney Time Demo
 if __name__ == '__main__':

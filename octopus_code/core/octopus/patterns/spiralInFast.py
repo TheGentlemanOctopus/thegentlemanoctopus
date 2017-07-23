@@ -37,14 +37,13 @@ class SpiralInFast(Pattern):
 
 
     def next_frame(self, octopus, data):
-        eq = data["eq"]
+        eq = data.eq
 
         current_time = np.float16((time.time() - self.start_time) % 1000)
         dt = current_time - self.previous_time
         self.previous_time = current_time
 
         self.t = np.append(self.t, current_time)
-        
 
         scale = np.float16(255)
         self.r = np.append(self.r, scale*np.mean([eq[0], eq[1]], dtype=np.float16))
