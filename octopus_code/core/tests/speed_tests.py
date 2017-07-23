@@ -3,6 +3,7 @@ import core.octopus.layouts.octopus as octopus
 import core.octopus.opc
 
 import os
+import sys
 
 import psutil
 import time
@@ -22,11 +23,12 @@ import mock_opc_server
 import core.tests.speedTestData as speedTestData
 from core.tests.speedTestData import SpeedTestData
 
-# This may not work on the odroid
+# matplotlib may not work on the odroid
 try:
     import matplotlib.pyplot as plt
     import core.tests.utils as utils
     plotting = True
+
 except Exception as e:
     plotting = False
 
@@ -34,8 +36,6 @@ Testopus = "./core/tests/test_octopus.json"
 Test_File = "./core/tests/test_data.csv"
 
 def speed_test(pattern, run_time=10):
-    print "Speed testing", pattern.__class__.__name__
-
     pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
         framerate=20,
         enable_status_monitor=False
@@ -49,7 +49,14 @@ def speed_test(pattern, run_time=10):
     # Run the Pattern for a bit and log data
     try: 
         while time.time() - run_start < run_time:
-            #print int(time.time() - run_start), "/", run_time
+            status_string = ("Testing ", 
+                pattern.__class__.__name__, ": ", 
+                int(time.time() - run_start), 
+                "s of ", str(run_time), "s"
+            )
+            status_string = "".join([str(x) for x in status_string])
+            print '\r', status_string,
+            sys.stdout.flush()
 
             loop_start = time.time()
 
@@ -62,6 +69,8 @@ def speed_test(pattern, run_time=10):
 
             SpeedTestData(t, rate, cpu, mem).save(test_file)
 
+        print "\n"
+
 
     except Exception as err:
         raise err
@@ -70,6 +79,19 @@ def speed_test(pattern, run_time=10):
         test_file.close()
 
     print "Test completed.."
+
+def print_results(filename):
+    results = speedTestData.load_csv(filename)
+
+    t = [result.t for result in results]
+    framerate = [result.framerate for result in results]
+    mem = [result.mem for result in results]
+    cpu = [result.cpu for result in results]
+
+    print "Min Framerate", np.min(framerate)
+    print "Max mem", np.max(mem)
+    print "Max CPU", np.max(cpu)
+
 
 def plot_results(filename):
     results = speedTestData.load_csv(filename)
@@ -97,29 +119,40 @@ def plot_results(filename):
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('CPU')
 
+    print_results(filename)
+
     plt.show()
 
 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Test the octopus!"
+    )
 
     #TODO: Print Results
     parser.add_argument('mode', choices=['test', 'plot'], help=
         'test: Test the octopus\n'
         'plot: plot test data csv'
     )
+
+    parser.add_argument('-t', type=int, help="Time to test for in seconds", default=5)
     
     args = parser.parse_args()
 
     if args.mode == "test":
-        speed_test(ShambalaPattern())
+        speed_test(ShambalaPattern(), run_time=args.t)
+
     elif args.mode == "plot":
         if not plotting:
             print "Cannot import Matplotlib on this device"
-
         plot_results(Test_File)
+
+    elif args.mode =="print":
+        print_results(Test_File)
+
     else:
         print parser.print_help()
 
