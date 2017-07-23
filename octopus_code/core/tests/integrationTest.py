@@ -15,8 +15,8 @@ import numpy as np
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
 
-import core.tests.speedTestData as speedTestData
-from core.tests.speedTestData import SpeedTestData
+import core.tests.integrationTestData as integrationTestData
+from core.tests.integrationTestData import IntegrationTestData
 
 # matplotlib may not work on the odroid
 try:
@@ -69,7 +69,7 @@ class IntegrationTest:
                 mem = process.memory_percent()
                 cpu = psutil.cpu_percent(interval=0.3)
 
-                SpeedTestData(t, rate, cpu, mem).save(test_file)
+                IntegrationTestData(t, rate, cpu, mem).save(test_file)
 
             print "\n"
 
@@ -87,7 +87,7 @@ class IntegrationTest:
                 print "TEST FAILED"
 
 def print_results(filename):
-    results = speedTestData.load_csv(filename)
+    results = integrationTestData.load_csv(filename)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]

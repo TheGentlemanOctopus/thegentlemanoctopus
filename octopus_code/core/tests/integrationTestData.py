@@ -1,7 +1,7 @@
 import csv
 
 
-class SpeedTestData:
+class IntegrationTestData:
     def __init__(self, t, framerate, cpu, mem):
         self.t = t
         self.framerate = framerate
