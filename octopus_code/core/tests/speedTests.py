@@ -30,58 +30,61 @@ except Exception as e:
 Testopus = "./core/tests/test_octopus.json" 
 Test_File = "./core/tests/test_data.csv"
 
-def speed_test(pattern, run_time=10):
-    pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
-        framerate=20,
-        enable_status_monitor=False
+class IntegrationTest:
+    def __init__(self, framerate = 20):
+        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
+            framerate=framerate,
+            enable_status_monitor=False
         )
 
-    pattern_generator.patterns = [pattern]
-    run_start = time.time()
-    process = psutil.Process(os.getpid())
-    test_file = open(Test_File, "w")
+    def run(self, pattern, run_time=10): 
+        self.pattern_generator.patterns = [pattern]
+        
+        run_start = time.time()
+        process = psutil.Process(os.getpid())
+        test_file = open(Test_File, "w")
 
-    test_succesful = True
+        test_succesful = True
 
-    # Run the Pattern for a bit and log data
-    try: 
-        while time.time() - run_start < run_time:
-            status_string = (
-                "Testing ", pattern.__class__.__name__, ": ", 
-                int(time.time() - run_start), "s",
-                " of ", 
-                str(run_time), "s"
-            )
-            status_string = "".join([str(x) for x in status_string])
-            print '\r', status_string,
-            sys.stdout.flush()
+        # Run the Pattern for a bit and log data
+        try: 
+            while time.time() - run_start < run_time:
+                status_string = (
+                    "Testing ", pattern.__class__.__name__, ": ", 
+                    int(time.time() - run_start), "s",
+                    " of ", 
+                    str(run_time), "s"
+                )
+                status_string = "".join([str(x) for x in status_string])
+                print '\r', status_string,
+                sys.stdout.flush()
 
-            #Update the pattern generator
-            loop_start = time.time()
+                #Update the pattern generator
+                loop_start = time.time()
 
-            pattern_generator.update()
+                self.pattern_generator.update()
 
-            rate = 1/(time.time() - loop_start)
-            t = loop_start - run_start
-            mem = process.memory_percent()
-            cpu = psutil.cpu_percent(interval=0.3)
+                rate = 1/(time.time() - loop_start)
+                t = loop_start - run_start
+                mem = process.memory_percent()
+                cpu = psutil.cpu_percent(interval=0.3)
 
-            SpeedTestData(t, rate, cpu, mem).save(test_file)
+                SpeedTestData(t, rate, cpu, mem).save(test_file)
 
-        print "\n"
+            print "\n"
 
 
-    except Exception as err:
-        test_succesful = False 
-        raise err
+        except Exception as err:
+            test_succesful = False 
+            raise err
 
-    finally:
-        test_file.close()
+        finally:
+            test_file.close()
 
-    if test_succesful:
-        print "Test completed.."
-    else:
-        print "TEST FAILED"
+            if test_succesful:
+                print "Test completed.."
+            else:
+                print "TEST FAILED"
 
 def print_results(filename):
     results = speedTestData.load_csv(filename)
@@ -148,7 +151,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == "test":
-        speed_test(RpcTestPattern(), run_time=args.t)
+        integration_test = IntegrationTest()
+        integration_test.run(RpcTestPattern(), run_time=args.t)
 
     elif args.mode == "plot":
         if not plotting:
