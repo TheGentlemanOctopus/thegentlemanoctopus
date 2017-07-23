@@ -7,6 +7,7 @@ import os
 import psutil
 import time
 import csv
+import argparse
 
 import numpy as np
 
@@ -60,8 +61,19 @@ def speed_test(pattern, run_time=10):
     finally:
         test_file.close()
 
-    plot_results(Test_File)
-
+    print "Test completed.."
 
 if __name__ == '__main__':
-    speed_test(ShambalaPattern())
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument('mode', choices=['test', 'plot'], help=
+        'test: Test the octopus\n'
+        'plot: plot test data csv')
+    args = parser.parse_args()
+
+    if args.mode == "test":
+        speed_test(ShambalaPattern())
+    else:
+        print parser.print_help()
+
+
