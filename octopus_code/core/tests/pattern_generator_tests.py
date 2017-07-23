@@ -39,34 +39,6 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         print "Testing", pattern.__class__.__name__
         self.pattern_speed_tester(pattern, run_time, framerate)
 
-    def pattern_speed_tester(self, pattern, run_time, framerate):
-        pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
-            framerate=framerate,
-            enable_status_monitor=False
-            )
-
-        pattern_generator.patterns = [pattern]
-
-        run_start = time.time()
-        rates = []
-
-        while time.time() - run_start < run_time:
-            loop_start = time.time()
-
-            pattern_generator.update()
-
-            loop_time = time.time() - loop_start
-            rate = 1.0/loop_time
-            rates.append(rate)
-
-        mean_rate = np.mean(rates)
-        min_rate = np.min(rates)
-        max_rate = np.max(rates)
-
-        print "Framerate", mean_rate, "(", min_rate, "/", max_rate, ")"
-
-        #TODO: Test CPU / RAM
-
 
     def test_continues_on_pattern_exception(self):
         pass

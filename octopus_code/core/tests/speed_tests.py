@@ -63,12 +63,13 @@ def speed_test(pattern, run_time=10):
 
             #Update the pattern generator
             loop_start = time.time()
+
             pattern_generator.update()
 
-            t = loop_start - run_start
             rate = 1/(time.time() - loop_start)
+            t = loop_start - run_start
             mem = process.memory_percent()
-            cpu = psutil.cpu_percent(interval=None)
+            cpu = psutil.cpu_percent(interval=0.3)
 
             SpeedTestData(t, rate, cpu, mem).save(test_file)
 
@@ -108,23 +109,24 @@ def plot_results(filename):
     mem = [result.mem for result in results]
     cpu = [result.cpu for result in results]
 
-    ax = utils.new_axes()
-    ax.plot(t, framerate)
-    ax.set_title('Framerate')
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Framerate')
 
-    ax = utils.new_axes()
-    ax.plot(t, mem)
-    ax.set_title('Memory Usage')
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Memory (Mb)')
+    plt.subplot(3, 1, 1)
+    plt.plot(t, framerate)
+    plt.title('Framerate')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Framerate')
 
-    ax = utils.new_axes()
-    ax.plot(t, cpu)
-    ax.set_title('Framerate')
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel('CPU')
+    plt.subplot(3, 1, 2)
+    plt.plot(t, mem)
+    plt.title('Memory Usage')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Memory (Mb)')
+
+    plt.subplot(3, 1, 3)
+    plt.title('CPU Usage')
+    plt.xlabel('Time (s)')
+    plt.ylabel('CPU %')
+    plt.ylim([0, 100])
 
     print_results(filename)
 
@@ -140,9 +142,10 @@ if __name__ == '__main__':
     )
 
     #TODO: Print Results
-    parser.add_argument('mode', choices=['test', 'plot'], help=
+    parser.add_argument('mode', choices=['test', 'plot', 'print'], help=
         'test: Test the octopus\n'
-        'plot: plot test data csv'
+        'plot: plot test data csv\n'
+        'print: print test metrics'
     )
 
     parser.add_argument('-t', type=int, help="Time to test for in seconds", default=5)
