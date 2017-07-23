@@ -13,9 +13,9 @@ from core.octopus.patterns.shambalaPattern import ShambalaPattern
 # Standard library imports...
 from mock import patch, MagicMock
 
-Testopus = "./core/tests/test_octopus.json" 
+import utils
 
-class TestPatternGeneratorMethods(unittest.TestCase):
+class TestPatternGenerator(unittest.TestCase):
 
     # Mock OPC connectionc
     def setUp(self):
@@ -24,7 +24,7 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         opc_mock.can_connect = MagicMock(return_value=True)
         opc_mock.put_pixels = MagicMock()
 
-        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), enable_status_monitor=False)
+        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(utils.Testopus), enable_status_monitor=False)
 
         print_string = "".join(["\n", "Running ", self._testMethodName, "\n"])
         print print_string, "*"*len(print_string)

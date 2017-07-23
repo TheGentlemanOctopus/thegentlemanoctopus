@@ -5,3 +5,5 @@ def new_axes():
     ax = plt.axes()
     fig.add_axes(ax)
     return ax
+
+Testopus = "./core/tests/test_octopus.json" 
