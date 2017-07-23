@@ -148,7 +148,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == "test":
-        speed_test(ShambalaPattern(), run_time=args.t)
+        speed_test(RpcTestPattern(), run_time=args.t)
 
     elif args.mode == "plot":
         if not plotting:

@@ -94,12 +94,7 @@ class PatternGenerator:
             loop_start = time.time()
 
             try:
-                pixels = self.update()
-                
-                if not pixels:
-                    break
-
-                self.client.put_pixels(pixels, channel=1)
+                self.update()
 
             except Exception as e:
                 print e
@@ -149,7 +144,7 @@ class PatternGenerator:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             raise e
 
-        return pixels
+        self.client.put_pixels(pixels, channel=1)
 
     def set_default_pattern(self):
         if self.patterns:
