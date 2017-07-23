@@ -14,13 +14,21 @@ import numpy as np
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
 
-import matplotlib.pyplot as plt
-
 # Standard library imports...
 #from mock import patch, MagicMock
+#TODO: deleye
 import mock_opc_server
+
+import core.tests.speedTestData as speedTestData
 from core.tests.speedTestData import SpeedTestData
 
+# This may not work on the odroid
+try:
+    import matplotlib.pyplot as plt
+    import core.tests.utils as utils
+    plotting = True
+except Exception as e:
+    plotting = False
 
 Testopus = "./core/tests/test_octopus.json" 
 Test_File = "./core/tests/test_data.csv"
@@ -63,16 +71,55 @@ def speed_test(pattern, run_time=10):
 
     print "Test completed.."
 
+def plot_results(filename):
+    results = speedTestData.load_csv(filename)
+
+    t = [result.t for result in results]
+    framerate = [result.framerate for result in results]
+    mem = [result.mem for result in results]
+    cpu = [result.cpu for result in results]
+
+    ax = utils.new_axes()
+    ax.plot(t, framerate)
+    ax.set_title('Framerate')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Framerate')
+
+    ax = utils.new_axes()
+    ax.plot(t, mem)
+    ax.set_title('Memory Usage')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Memory (Mb)')
+
+    ax = utils.new_axes()
+    ax.plot(t, cpu)
+    ax.set_title('Framerate')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('CPU')
+
+    plt.show()
+
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 
+    #TODO: Print Results
     parser.add_argument('mode', choices=['test', 'plot'], help=
         'test: Test the octopus\n'
-        'plot: plot test data csv')
+        'plot: plot test data csv'
+    )
+    
     args = parser.parse_args()
 
     if args.mode == "test":
         speed_test(ShambalaPattern())
+    elif args.mode == "plot":
+        if not plotting:
+            print "Cannot import Matplotlib on this device"
+
+        plot_results(Test_File)
     else:
         print parser.print_help()
 
