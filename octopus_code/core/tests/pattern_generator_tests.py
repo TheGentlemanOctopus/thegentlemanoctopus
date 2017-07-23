@@ -34,14 +34,10 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         self.pattern_generator.run(timeout=timeout)
         self.assertTrue(time.time() - start_time + timeout*0.01 > timeout)
 
-    def test_speed_shambala_pattern(self, run_time=5, framerate=20):
-        pattern = ShambalaPattern()
-        print "Testing", pattern.__class__.__name__
-        self.pattern_speed_tester(pattern, run_time, framerate)
-
-
     def test_continues_on_pattern_exception(self):
         pass
+
+    
 
 if __name__ == '__main__':
     unittest.main()
