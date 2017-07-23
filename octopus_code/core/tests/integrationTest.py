@@ -9,6 +9,7 @@ import psutil
 import time
 import csv
 import argparse
+import threading
 
 import numpy as np
 
@@ -36,6 +37,13 @@ class IntegrationTest:
             framerate=framerate,
             enable_status_monitor=False
         )
+
+        # Start the cpu meter
+        self.cpu_percent = 0
+        self.lock = threading.Lock()
+        thread = threading.Thread(target=self.cpu_fun)
+        thread.daemon = True
+        thread.start()
 
     def run(self, pattern, run_time=10): 
         self.pattern_generator.patterns = [pattern]
@@ -67,7 +75,7 @@ class IntegrationTest:
                 rate = 1/(time.time() - loop_start)
                 t = loop_start - run_start
                 mem = process.memory_percent()
-                cpu = psutil.cpu_percent(interval=0.3)
+                cpu = self.get_cpu()
 
                 IntegrationTestData(t, rate, cpu, mem).save(test_file)
 
@@ -86,6 +94,20 @@ class IntegrationTest:
             else:
                 print "TEST FAILED"
 
+    # TODO: Methods to stop cpu meter
+    def cpu_fun(self):
+        while True:
+            cpu_percent = psutil.cpu_percent(interval=0.3)
+
+            with self.lock:
+                self.cpu_percent
+
+    def get_cpu(self):
+        with self.lock:
+            cpu_percent = self.cpu_percent
+
+        return cpu_percent
+
 def print_results(filename):
     results = integrationTestData.load_csv(filename)
 
@@ -100,7 +122,7 @@ def print_results(filename):
 
 
 def plot_results(filename):
-    results = speedTestData.load_csv(filename)
+    results = integrationTestData.load_csv(filename)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]

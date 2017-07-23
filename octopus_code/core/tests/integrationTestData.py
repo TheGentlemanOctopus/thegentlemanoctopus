@@ -18,4 +18,4 @@ class IntegrationTestData:
 def load_csv(filename):
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
-        return [SpeedTestData(*row) for row in csvreader]
+        return [IntegrationTestData(*[float(x) for x in row]) for row in csvreader]
