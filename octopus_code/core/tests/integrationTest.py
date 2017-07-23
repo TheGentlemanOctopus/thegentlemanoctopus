@@ -58,7 +58,7 @@ class IntegrationTest:
         try: 
             while time.time() - run_start < run_time:
                 status_string = (
-                    "Testing ", pattern.__class__.__name__, ": ", 
+                    "Testing ", self.pattern_generator.current_pattern.__class__.__name__, ": ", 
                     int(time.time() - run_start), "s",
                     " of ", 
                     str(run_time), "s"
@@ -70,6 +70,7 @@ class IntegrationTest:
                 #Update the pattern generator
                 loop_start = time.time()
 
+
                 self.pattern_generator.update()
 
                 rate = 1/(time.time() - loop_start)
@@ -77,7 +78,10 @@ class IntegrationTest:
                 mem = process.memory_percent()
                 cpu = self.get_cpu()
 
-                IntegrationTestData(t, rate, cpu, mem).save(test_file)
+                # if self.pattern_generator.current_pattern is ShambalaPattern:
+                #     pattern_name = self.pattern_generator.current_pattern.
+
+                IntegrationTestData(t, rate, cpu, mem, "").save(test_file)
 
             print "\n"
 
@@ -173,7 +177,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == "test":
-        integration_test = IntegrationTest([ShambalaPattern()])
+        integration_test = IntegrationTest(patterns=[ShambalaPattern()])
         integration_test.run(run_time=args.t)
 
     elif args.mode == "plot":

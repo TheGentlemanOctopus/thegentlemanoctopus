@@ -19,8 +19,8 @@ class ShambalaPattern(Pattern):
     def __init__(self):
         self.patterns = [
             RainbowPlaidEqPattern(),
-            SpiralOutFast(),
-            SpiralInFast(),
+            #SpiralOutFast(),
+            #SpiralInFast(),
             LavaLampPattern(),
             EqPattern()
         ]
