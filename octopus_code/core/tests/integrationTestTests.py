@@ -18,7 +18,7 @@ class TestIntegrationTest(unittest.TestCase):
         opc_mock.can_connect = MagicMock(return_value=True)
         opc_mock.put_pixels = MagicMock()
 
-        self.integration_test = IntegrationTest()
+        self.integration_test = IntegrationTest(patterns=[RpcTestPattern()])
 
         print_string = "".join(["\n", "Running ", self._testMethodName, "\n"])
         print print_string, "*"*len(print_string)
@@ -28,7 +28,7 @@ class TestIntegrationTest(unittest.TestCase):
             mock.side_effect = Exception("PURPOSELY BROKEN TEST PATTERN")
 
             with self.assertRaises(Exception):
-                self.integration_test.run(RpcTestPattern(), 0.1)
+                self.integration_test.run(0.1)
 
 
 if __name__ == '__main__':

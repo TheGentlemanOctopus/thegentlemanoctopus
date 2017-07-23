@@ -32,11 +32,12 @@ Testopus = "./core/tests/test_octopus.json"
 Test_File = "./core/tests/test_data.csv"
 
 class IntegrationTest:
-    def __init__(self, framerate = 20):
+    def __init__(self, framerate = 20, patterns = None):
+
         self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
             enable_status_monitor=False,
-            patterns = [ShambalaPattern()]
+            patterns = patterns
         )
 
         # Start the cpu meter
@@ -46,7 +47,7 @@ class IntegrationTest:
         thread.daemon = True
         thread.start()
 
-    def run(self, pattern, run_time=10):        
+    def run(self, run_time=10):        
         run_start = time.time()
         process = psutil.Process(os.getpid())
         test_file = open(Test_File, "w")
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == "test":
-        integration_test = IntegrationTest()
-        integration_test.run(ShambalaPattern(), run_time=args.t)
+        integration_test = IntegrationTest([ShambalaPattern()])
+        integration_test.run(run_time=args.t)
 
     elif args.mode == "plot":
         if not plotting:
