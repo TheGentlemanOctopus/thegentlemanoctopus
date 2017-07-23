@@ -48,7 +48,8 @@ class PatternGenerator:
             queue = Queue.Queue(1)
 
         self.queue = queue
-        self.queue_last_receive = time.time()
+        self.queue_last_receive = 0
+        self.queue_receive_timeout = queue_receive_timeout
 
         self.opc_host = opc_host
         self.opc_port = opc_port
@@ -129,21 +130,24 @@ class PatternGenerator:
         if not self.queue.empty():
             # Keep it clean and clear
             with self.queue.mutex:
-                eq = self.queue.queue[-1]
+                eq = self.queue.queue[-1]["eq"]
                 self.queue.queue.clear() 
 
             # TODO: Set bit depth somewhere
-            self.pattern_input_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
+            self.pattern_stream_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
             self.queue_last_receive = time.time()
 
-
+        # Default Eq data if none is received
+        if time.time() - self.queue_last_receive > self.queue_receive_timeout:
+            self.pattern_stream_data.siney_time()
 
         # Send some pixels
         try:
-            self.current_pattern.next_frame(self.octopus, self.pattern_input_data)
+            self.current_pattern.next_frame(self.octopus, self.pattern_stream_data)
             pixels = [pixel.color for pixel in self.octopus.pixels_zig_zag()]
-        except:
-            raise Exception("WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions")
+        except Exception as e:
+            print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            raise e
 
         return pixels
 

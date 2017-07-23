@@ -10,7 +10,7 @@ class RpcTestPattern(Pattern):
         self.register_param("blue", 0, 255, 255)
     
     def next_frame(self, octopus, data):
-        brightness = int(data["level"])
+        brightness = int(data.level)
         r = int(self.red*brightness)
         g = int(self.green*brightness)
         b = int(self.blue*brightness)

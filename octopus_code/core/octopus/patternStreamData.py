@@ -32,9 +32,9 @@ if __name__ == '__main__':
         pattern_stream_data.siney_time()
 
         count = 0
-        print "Bands",
+        print "Bands |",
         for band in pattern_stream_data.eq:
             print "|", "(%.2f)" % band,
             count += 1
 
-        sys.stdout.flush()
+        print ""
