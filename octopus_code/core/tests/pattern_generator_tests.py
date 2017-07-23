@@ -26,6 +26,8 @@ class TestPatternGeneratorMethods(unittest.TestCase):
 
         self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), enable_status_monitor=False)
 
+        print "\n", "Testing:", self._testMethodName
+
     def test_contains_default_pattern(self):
         self.assertTrue(len(self.pattern_generator.patterns) > 0)
 
@@ -35,9 +37,13 @@ class TestPatternGeneratorMethods(unittest.TestCase):
         self.assertTrue(time.time() - start_time + timeout*0.01 > timeout)
 
     def test_continues_on_pattern_exception(self):
-        pass
+        self.pattern_generator.patterns = [RpcTestPattern]
+        with patch('core.octopus.patterns.rpcTestPattern.RpcTestPattern.next_frame') as mock:
+            mock.side_effect = Exception("PURPOSELY BROKEN TEST PATTERN")
 
-    
+            self.pattern_generator.run(timeout=0.1)
+
+
 
 if __name__ == '__main__':
     unittest.main()
