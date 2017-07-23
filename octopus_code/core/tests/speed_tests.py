@@ -46,20 +46,23 @@ def speed_test(pattern, run_time=10):
     process = psutil.Process(os.getpid())
     test_file = open(Test_File, "w")
 
+    test_succesful = True
+
     # Run the Pattern for a bit and log data
     try: 
         while time.time() - run_start < run_time:
-            status_string = ("Testing ", 
-                pattern.__class__.__name__, ": ", 
-                int(time.time() - run_start), 
-                "s of ", str(run_time), "s"
+            status_string = (
+                "Testing ", pattern.__class__.__name__, ": ", 
+                int(time.time() - run_start), "s",
+                " of ", 
+                str(run_time), "s"
             )
             status_string = "".join([str(x) for x in status_string])
             print '\r', status_string,
             sys.stdout.flush()
 
+            #Update the pattern generator
             loop_start = time.time()
-
             pattern_generator.update()
 
             t = loop_start - run_start
@@ -73,12 +76,16 @@ def speed_test(pattern, run_time=10):
 
 
     except Exception as err:
+        test_succesful = False 
         raise err
 
     finally:
         test_file.close()
 
-    print "Test completed.."
+    if test_succesful:
+        print "Test completed.."
+    else:
+        print "TEST FAILED"
 
 def print_results(filename):
     results = speedTestData.load_csv(filename)
