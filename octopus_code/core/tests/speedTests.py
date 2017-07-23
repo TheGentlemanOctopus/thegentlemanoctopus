@@ -15,11 +15,6 @@ import numpy as np
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
 
-# Standard library imports...
-#from mock import patch, MagicMock
-#TODO: deleye
-import mock_opc_server
-
 import core.tests.speedTestData as speedTestData
 from core.tests.speedTestData import SpeedTestData
 
