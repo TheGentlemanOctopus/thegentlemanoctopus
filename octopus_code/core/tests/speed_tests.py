@@ -18,13 +18,11 @@ import matplotlib.pyplot as plt
 # Standard library imports...
 #from mock import patch, MagicMock
 import mock_opc_server
+from core.tests.speedTestData import SpeedTestData
 
 
 Testopus = "./core/tests/test_octopus.json" 
 Test_File = "./core/tests/test_data.csv"
-
-
-
 
 def speed_test(pattern, run_time=10):
     print "Speed testing", pattern.__class__.__name__
@@ -35,11 +33,8 @@ def speed_test(pattern, run_time=10):
         )
 
     pattern_generator.patterns = [pattern]
-
     run_start = time.time()
-
     process = psutil.Process(os.getpid())
-
     test_file = open(Test_File, "w")
 
     # Run the Pattern for a bit and log data
@@ -51,15 +46,12 @@ def speed_test(pattern, run_time=10):
 
             pattern_generator.update()
 
-            loop_time = time.time() - loop_start
-            rate = 1.0/loop_time
-
+            t = loop_start - run_start
+            rate = 1/(time.time() - loop_start)
             mem = process.memory_percent()
             cpu = psutil.cpu_percent(interval=None)
 
-            #Log data
-            data = [time.time(), rate, mem, cpu]
-            test_file.write(",".join([str(x) for x in data]) + '\n')
+            SpeedTestData(t, rate, cpu, mem).save(test_file)
 
 
     except Exception as err:
@@ -70,27 +62,6 @@ def speed_test(pattern, run_time=10):
 
     plot_results(Test_File)
 
-
-def plot_results(filepath):
-    t, rates, mems, cpus = load_csv(filepath)
-
-    plt.plot(t, mems)
-    plt.show()
-
-def load_csv(filename):
-    t = []
-    rates = []
-    mem = []
-    cpu = []
-    with open(filename, 'rb') as csvfile:
-        csvreader = csv.reader(csvfile, delimiter=',')
-        for row in csvreader:
-            t.append(float(row[0]))
-            rates.append(float(row[1]))
-            mem.append(float(row[2]))
-            cpu.append(float(row[3]))
-
-    return t, rates, mem, cpu
 
 if __name__ == '__main__':
     speed_test(ShambalaPattern())
