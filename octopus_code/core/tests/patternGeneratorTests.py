@@ -13,8 +13,6 @@ from core.octopus.patterns.shambalaPattern import ShambalaPattern
 # Standard library imports...
 from mock import patch, MagicMock
 
-import utils
-
 class TestPatternGenerator(unittest.TestCase):
 
     # Mock OPC connectionc
