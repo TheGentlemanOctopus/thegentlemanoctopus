@@ -32,12 +32,19 @@ Testopus = "./core/tests/test_octopus.json"
 Test_File = "./core/tests/test_data.csv"
 
 class IntegrationTest:
-    def __init__(self, framerate = 20, patterns = None):
+    def __init__(self, 
+        framerate=20, 
+        patterns = None,
+        host="127.0.0.1",
+        port=7890
+    ):
 
         self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
             enable_status_monitor=False,
-            patterns = patterns
+            patterns = patterns,
+            opc_host=host, 
+            opc_port=port,
         )
 
         # Start the cpu meter
@@ -201,11 +208,15 @@ if __name__ == '__main__':
     )
 
     parser.add_argument('-t', type=int, help="Time to test for in seconds", default=5)
+
+    parser.add_argument('-i', help="Time to test for in seconds", default="127.0.0.1")
+    parser.add_argument('-p', type=int, help="Time to test for in seconds", default=7890)
+
     
     args = parser.parse_args()
 
     if args.mode == "test":
-        integration_test = IntegrationTest(patterns=[ShambalaPattern()])
+        integration_test = IntegrationTest(patterns=[ShambalaPattern()], host=args.i, port=args.p)
         integration_test.run(run_time=args.t)
 
     elif args.mode == "plot":
