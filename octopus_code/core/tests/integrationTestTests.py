@@ -4,6 +4,10 @@ import numpy as np
 # Standard library imports...
 from mock import patch, MagicMock
 
+
+import utils
+
+
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 
 from core.tests.integrationTest import IntegrationTest

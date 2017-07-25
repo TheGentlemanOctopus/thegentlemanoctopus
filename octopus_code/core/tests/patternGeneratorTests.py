@@ -10,6 +10,8 @@ import numpy as np
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
 
+import utils
+
 # Standard library imports...
 from mock import patch, MagicMock
 

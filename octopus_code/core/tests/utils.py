@@ -1,0 +1,1 @@
+Testopus = "./core/tests/test_octopus.json"
