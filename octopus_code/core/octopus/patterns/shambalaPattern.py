@@ -19,15 +19,15 @@ class ShambalaPattern(Pattern):
     def __init__(self):
         self.patterns = [
             RainbowPlaidEqPattern(),
-            SpiralOutFast(),
-            SpiralInFast(),
+            #SpiralOutFast(),
+            #SpiralInFast(),
             LavaLampPattern(),
             EqPattern()
         ]
 
         self.last_transition = 0
-        self.register_param("min_switch_time", 5, 200, 30)
-        self.register_param("max_switch_time", 5, 200, 90)
+        self.register_param("min_switch_time", 1, 200, 30)
+        self.register_param("max_switch_time", 1, 200, 90)
 
         self.switch_time = self.next_switch_time()
 
@@ -75,6 +75,8 @@ class ShambalaPattern(Pattern):
         pattern.next_frame(octopus, data)
 
         return octopus.pixel_colors()
-        
+
+    def status(self):
+        return self.current_pattern.__class__.__name__
         
 

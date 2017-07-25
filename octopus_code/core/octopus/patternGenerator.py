@@ -17,6 +17,7 @@ from core.octopus.patterns.rainbowPlaidEqPattern import RainbowPlaidEqPattern
 from core.octopus.patterns.spiralOutFast import SpiralOutFast
 from core.octopus.patterns.spiralInFast import SpiralInFast
 
+from core.octopus.patternStreamData import PatternStreamData
 
 from core.octopus.patterns.lavaLampPattern import LavaLampPattern
 
@@ -38,7 +39,9 @@ class PatternGenerator:
         opc_port=7890,
         rhythm_channel = 0,
         framerate = 20,
-        enable_status_monitor=True
+        enable_status_monitor=True,
+        queue_receive_timeout=10,
+        patterns = None
     ):
         self.octopus = octopus
 
@@ -46,6 +49,8 @@ class PatternGenerator:
             queue = Queue.Queue(1)
 
         self.queue = queue
+        self.queue_last_receive = 0
+        self.queue_receive_timeout = queue_receive_timeout
 
         self.opc_host = opc_host
         self.opc_port = opc_port
@@ -59,26 +64,20 @@ class PatternGenerator:
         if not self.client.can_connect():
             raise Exception("Could not connect to opc at " + opc_ip)
 
-        self.patterns = [RpcTestPattern()]
-        self.current_pattern = []
+        if not patterns:
+            self.patterns = [RpcTestPattern()]
+        else:
+            self.patterns = patterns
 
         self.period = 1.0/framerate
         self.enable_status_monitor = enable_status_monitor
 
-        # For frame loop
         #Initialise data that's fed into patterns
-        self.pattern_input_data = self.default_pattern_input_data()
+        self.pattern_stream_data = PatternStreamData()
         self.set_default_pattern()
         
         #For detecting keyboard presses
         self.kb = kbHit.KBHit()    
-
-    def default_pattern_input_data(self):
-        return {
-            "level": 0,
-            "eq": (0,0,0,0,0,0,0), # 7 band
-            "rhythm_channel": self.rhythm_channel
-        }
 
     def run(self, timeout=0):
         if self.enable_status_monitor:
@@ -98,12 +97,7 @@ class PatternGenerator:
             loop_start = time.time()
 
             try:
-                pixels = self.update()
-                
-                if not pixels:
-                    break
-
-                self.client.put_pixels(pixels, channel=1)
+                self.update()
 
             except Exception as e:
                 print e
@@ -134,21 +128,28 @@ class PatternGenerator:
         if not self.queue.empty():
             # Keep it clean and clear
             with self.queue.mutex:
-                eq = self.queue.queue[-1]
+                eq = self.queue.queue[-1]["eq"]
                 self.queue.queue.clear() 
 
-            self.pattern_input_data["eq"] = [eq_level/1024.0 for eq_level in eq]
-            self.pattern_input_data["level"] = np.mean(eq)
+            # TODO: Set bit depth somewhere
+            self.pattern_stream_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
+            self.queue_last_receive = time.time()
+
+        # Default Eq data if none is received
+        if time.time() - self.queue_last_receive > self.queue_receive_timeout:
+            self.pattern_stream_data.siney_time()
 
         # Send some pixels
         try:
-            self.current_pattern.next_frame(self.octopus, self.pattern_input_data)
+            self.current_pattern.next_frame(self.octopus, self.pattern_stream_data)
             pixels = [pixel.color for pixel in self.octopus.pixels_zig_zag()]
-        except:
-            raise Exception("WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions")
+        except Exception as e:
+            print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            raise e
 
-        return pixels
+        self.client.put_pixels(pixels, channel=1)
 
+    # TODO: Delete this silly function?
     def set_default_pattern(self):
         if self.patterns:
             self.set_current_pattern(0)

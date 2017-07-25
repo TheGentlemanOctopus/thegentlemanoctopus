@@ -28,6 +28,10 @@ class Pattern:
     def on_pattern_select(self, octopus):
         pass
 
+    def status(self):
+        return self.__class__.__name__
+
+
 class PatternParam:
     def __init__(self, minimum, maximum, default, index):
         if minimum > maximum:

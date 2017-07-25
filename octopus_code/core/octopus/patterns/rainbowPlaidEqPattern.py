@@ -57,18 +57,15 @@ class RainbowPlaidEqPattern(Pattern):
 
     def on_pattern_select(self, octopus):
         self.pixels = octopus.pixels()
-
         self.pct = color_utils.linspace_16(0, 1, len(self.pixels))
-
-
-        #0,1,2,...,37,0,1,2,...,37
         self.pct_jittered = np.mod(color_utils.linspace_16(0, 77, len(self.pixels)), 37)
 
 
     def next_frame(self, octopus, data):
         current_time = np.float16((time.time() - self.start_time) % 1000)
 
-        speed = data['eq'][data["rhythm_channel"]]
+        speed = data.level
+
 
         self.pattern_time = self.pattern_time + (self.time_warp_speed*speed+1)*(self.real_time - current_time)
         self.real_time = current_time

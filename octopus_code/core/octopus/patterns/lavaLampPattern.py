@@ -53,7 +53,7 @@ class LavaLampPattern(Pattern):
         #Warp speed
         current_time = (time.time() - self.start_time) % 1000
 
-        speed = data['eq'][data["rhythm_channel"]]
+        speed = data.level
         self.pattern_time = self.pattern_time + (self.time_warp_speed*speed+1)*(self.real_time - current_time)
         self.real_time = current_time
 

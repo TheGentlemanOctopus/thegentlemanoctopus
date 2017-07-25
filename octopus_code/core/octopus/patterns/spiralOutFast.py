@@ -37,7 +37,7 @@ class SpiralOutFast(Pattern):
 
 
     def next_frame(self, octopus, data):
-        eq = data["eq"]
+        eq = data.eq
 
         current_time = np.float16((time.time() - self.start_time) % 1000)
         dt = current_time - self.previous_time
