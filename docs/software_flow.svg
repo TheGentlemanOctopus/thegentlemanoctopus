@@ -23,9 +23,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.175"
-     inkscape:cx="476.37082"
-     inkscape:cy="1454.6285"
+     inkscape:zoom="0.35355339"
+     inkscape:cx="848.10696"
+     inkscape:cy="817.03525"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1376"
@@ -78,7 +78,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -252,15 +252,15 @@
          id="tspan3038"
          sodipodi:role="line">Pixel.py</tspan></text>
     <path
-       inkscape:connection-end-point="d4"
-       inkscape:connection-end="#rect3010"
        inkscape:connection-start-point="d4"
        inkscape:connection-start="#rect3004"
        inkscape:connector-curvature="0"
        inkscape:connector-type="polyline"
        id="path3040"
        d="M -47.553144,228.53961 145.56046,-209.49291"
-       style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lend)" />
+       style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lend)"
+       inkscape:connection-end-point="d4"
+       inkscape:connection-end="#rect3010" />
     <path
        inkscape:connection-end-point="d4"
        inkscape:connection-end="#rect3069"
@@ -401,7 +401,7 @@
     <path
        sodipodi:nodetypes="cc"
        style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lend);display:inline"
-       d="m -267.71096,-118.63684 62.69715,0"
+       d="m -255.41542,-121.79335 62.69715,0"
        id="path5022"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
@@ -421,7 +421,7 @@
        inkscape:connector-curvature="0"
        inkscape:connector-type="polyline"
        id="path5028"
-       d="m -267.71096,-72.92255 62.69715,0"
+       d="m -255.41542,-76.079063 62.69715,0"
        style="fill:none;stroke:#f57900;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lendv);display:inline"
        sodipodi:nodetypes="cc" />
     <text
@@ -541,7 +541,7 @@
          y="735.17505"
          x="846.61511"
          id="tspan5371"
-         sodipodi:role="line">BeatDetection.py</tspan></text>
+         sodipodi:role="line">fft_UDP.py</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lend)"
        d="M 222.51628,481.93565 464.63522,712.12549"
@@ -585,7 +585,7 @@
        sodipodi:nodetypes="cc" />
     <path
        style="fill:none;stroke:#f57900;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lendv);display:inline"
-       d="m 420.04501,-5.0572706 0,719.2030706"
+       d="m 427.08775,-11.062515 0,719.203075"
        id="path5937"
        inkscape:connector-type="orthogonal"
        inkscape:connector-curvature="0"
@@ -596,10 +596,10 @@
        id="path6123"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0"
-       inkscape:connection-start="#rect3010"
-       inkscape:connection-start-point="d4"
+       inkscape:connection-end-point="d4"
        inkscape:connection-end="#rect4832"
-       inkscape:connection-end-point="d4" />
+       inkscape:connection-start-point="d4"
+       inkscape:connection-start="#rect3010" />
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -662,5 +662,27 @@
          x="223.11821"
          y="-561.80841"
          style="font-size:20px">android_app.py</tspan></text>
+    <path
+       style="fill:none;stroke:#f57900;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lendv);display:inline"
+       d="m 529.08036,712.12549 46.3688,-132.36183"
+       id="path6390"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       inkscape:connection-end="#rect3016"
+       inkscape:connection-end-point="d4"
+       inkscape:connection-start="#rect5361"
+       inkscape:connection-start-point="d4"
+       sodipodi:nodetypes="cc" />
+    <path
+       inkscape:connector-curvature="0"
+       inkscape:connector-type="polyline"
+       id="path6392"
+       d="m 519.7925,712.12549 70.65882,-476.6475"
+       style="fill:none;stroke:#f57900;stroke-width:1.77165353;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow1Lendv);display:inline"
+       inkscape:connection-end="#rect3843"
+       inkscape:connection-end-point="d4"
+       inkscape:connection-start="#rect5361"
+       inkscape:connection-start-point="d4"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
