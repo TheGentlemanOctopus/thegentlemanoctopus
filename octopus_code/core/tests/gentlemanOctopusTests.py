@@ -53,7 +53,7 @@ class TestGentlemanOctopus(unittest.TestCase):
         self.gentleman_octopus.queue_receive_timeout = timeout
 
         # goes straight into siney time
-        self.assertTrue(not self.eq_quiet())
+        self.assertFalse(self.eq_quiet())
 
         # Resets on input
         self.gentleman_octopus.audio_stream_queue.put({"eq": (0,0,0,0,0,0,0)})
@@ -61,7 +61,7 @@ class TestGentlemanOctopus(unittest.TestCase):
 
         # Returns to siney time on timeout
         time.sleep(timeout)
-        self.assertTrue(not self.eq_quiet())
+        self.assertFalse(self.eq_quiet())
 
 
     def eq_quiet(self):
