@@ -1,4 +1,4 @@
-import core.octopus.patternGenerator as pg
+import core.octopus.gentlemanOctopus as gentlemanOctopus
 import core.octopus.layouts.octopus as octopus
 import core.octopus.opc
 
@@ -39,7 +39,7 @@ class IntegrationTest:
         port=7890
     ):
 
-        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
+        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopus.ImportOctopus(Testopus), 
             framerate=framerate,
             enable_status_monitor=False,
             patterns = patterns,
@@ -65,7 +65,7 @@ class IntegrationTest:
         try: 
             while time.time() - run_start < run_time:
                 status_string = (
-                    "Testing ", self.pattern_generator.current_pattern.__class__.__name__, ": ", 
+                    "Testing ", self.gentleman_octopus.current_pattern.__class__.__name__, ": ", 
                     int(time.time() - run_start), "s",
                     " of ", 
                     str(run_time), "s"
@@ -78,14 +78,14 @@ class IntegrationTest:
                 loop_start = time.time()
 
 
-                self.pattern_generator.update()
+                self.gentleman_octopus.update()
 
                 rate = 1/(time.time() - loop_start)
                 t = loop_start - run_start
                 mem = process.memory_percent()
                 cpu = self.get_cpu()
 
-                status = self.pattern_generator.current_pattern.status()
+                status = self.gentleman_octopus.current_pattern.status()
 
                 IntegrationTestData(t, rate, cpu, mem, status).save(test_file)
 

@@ -31,7 +31,7 @@ import numpy as np
 #Generate patterns and send to a OPC host
 #Strict throws exceptions if it cannot keep up
 #with framerates or if patterns are unstable
-class PatternGenerator:
+class GentlemanOctopus:
     def __init__(self,
         octopus,
         queue=None,
