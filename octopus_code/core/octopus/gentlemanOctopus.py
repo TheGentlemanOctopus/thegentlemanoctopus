@@ -21,17 +21,20 @@ from core.octopus.patternStreamData import PatternStreamData
 
 from core.octopus.patterns.lavaLampPattern import LavaLampPattern
 
-import core.octopus.layouts.octopus as octopus
+import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.kbHit as kbHit
 
 from core.octopus.rpcServer import RpcServer
 
+from device import Device
+
 import numpy as np
 
 #Generate patterns and send to a OPC host
-#Strict throws exceptions if it cannot keep up
-#with framerates or if patterns are unstable
-class GentlemanOctopus:
+class GentlemanOctopus(Device):
+    """a GentlemanOctopus is responsible for generating patterns
+    and projecting those colors onto its chromatophores (opc host)
+    """
     def __init__(self,
         octopus,
         queue=None,
@@ -43,6 +46,10 @@ class GentlemanOctopus:
         queue_receive_timeout=10,
         patterns = None
     ):
+        """ octopus is a octopus layout"""
+
+        # Initialise Base contructor
+
         self.octopus = octopus
 
         if not queue:

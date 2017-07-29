@@ -1,6 +1,6 @@
 import unittest
 import core.octopus.gentlemanOctopus as gentlemanOctopus
-import core.octopus.layouts.octopus as octopus
+import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.opc
 
 import time
@@ -24,7 +24,7 @@ class TestGentlemanOctopus(unittest.TestCase):
         opc_mock.can_connect = MagicMock(return_value=True)
         opc_mock.put_pixels = MagicMock()
 
-        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopus.ImportOctopus(utils.Testopus), enable_status_monitor=False)
+        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(utils.Testopus), enable_status_monitor=False)
 
         print_string = "".join(["\n", "Running ", self._testMethodName, "\n"])
         print print_string, "*"*len(print_string)

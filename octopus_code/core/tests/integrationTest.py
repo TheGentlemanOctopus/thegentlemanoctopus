@@ -1,5 +1,5 @@
 import core.octopus.gentlemanOctopus as gentlemanOctopus
-import core.octopus.layouts.octopus as octopus
+import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.opc
 
 import os
@@ -19,6 +19,8 @@ from core.octopus.patterns.shambalaPattern import ShambalaPattern
 import core.tests.integrationTestData as integrationTestData
 from core.tests.integrationTestData import IntegrationTestData
 
+from utils import Testopus
+
 # matplotlib may not work on the odroid
 try:
     import matplotlib.pyplot as plt
@@ -28,7 +30,6 @@ try:
 except Exception as e:
     plotting = False
 
-Testopus = "./core/tests/test_octopus.json" 
 Test_File = "./core/tests/test_data.csv"
 
 class IntegrationTest:
@@ -39,7 +40,7 @@ class IntegrationTest:
         port=7890
     ):
 
-        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopus.ImportOctopus(Testopus), 
+        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(Testopus), 
             framerate=framerate,
             enable_status_monitor=False,
             patterns = patterns,
