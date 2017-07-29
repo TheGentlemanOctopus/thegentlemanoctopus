@@ -2,6 +2,7 @@ import opc
 import time
 import sys
 import Queue
+import os
 
 from core.udp.udp_server import UDPServer
 
@@ -27,6 +28,7 @@ import core.octopus.kbHit as kbHit
 from core.octopus.rpcServer import RpcServer
 
 from device import Device
+import argparse
 
 import numpy as np
 
@@ -36,7 +38,7 @@ class GentlemanOctopus(Device):
     and projecting those colors onto its chromatophores (opc host)
     """
     def __init__(self,
-        octopus,
+        octopus_layout,
         control_queue=None,
         audio_stream_queue=None,
         opc_host="127.0.0.1", 
@@ -52,7 +54,7 @@ class GentlemanOctopus(Device):
         # Initialise Base contructor
         super(GentlemanOctopus, self).__init__(control_queue, audio_stream_queue)
 
-        self.octopus = octopus
+        self.octopus_layout = octopus_layout
 
         # TODO Should this go on device? I think fft bad output analysis and receive timeouts should 
         # go on a higher level class
@@ -63,7 +65,7 @@ class GentlemanOctopus(Device):
         self.opc_host = opc_host
         self.opc_port = opc_port
 
-        # This should be in audio stream queue class
+        # TODO This should be in audio stream queue class
         self.rhythm_channel = rhythm_channel
 
         opc_ip = opc_host + ":" + str(opc_port)
@@ -124,8 +126,8 @@ class GentlemanOctopus(Device):
 
         # Send some pixels
         try:
-            self.current_pattern.next_frame(self.octopus, self.pattern_stream_data)
-            pixels = [pixel.color for pixel in self.octopus.pixels_zig_zag()]
+            self.current_pattern.next_frame(self.octopus_layout, self.pattern_stream_data)
+            pixels = [pixel.color for pixel in self.octopus_layout.pixels_zig_zag()]
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             raise e
@@ -161,8 +163,8 @@ class GentlemanOctopus(Device):
 
         # Switch the pattern
         self.current_pattern = self.patterns[index]
-        self.current_pattern.on_pattern_select(self.octopus)
-        self.octopus.clear_pixels()
+        self.current_pattern.on_pattern_select(self.octopus_layout)
+        self.octopus_layout.clear_pixels()
 
         #Set Key mappings for new parameters
         key_mapping = [
@@ -286,48 +288,37 @@ class KeyMapping:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Make an octopus')
+    parser.add_argument('-l', '--layout', default=os.path.dirname(__file__) + "/layouts/octopusLayout.json",
+                        help='Path to octopus json')
 
-    #TODO Pretty args
-    #Determine if using rpc or not
-    use_rpc = False
+    parser.add_argument('-i', '--host', default="127.0.0.1", help="opc host")
+    parser.add_argument('-p', '--port', type=int, default=7890, help="opc port")
 
-    num_pos_args = len(sys.argv)-1
-    for i in range(num_pos_args):
-        if sys.argv[i] == "--rpc":
-            host = sys.argv[i+1]
+    args = parser.parse_args()
 
-            rpc_server = RpcServer(host="127.0.0.1", port=8000)
-            rpc_server.start()
-            queue = rpc_server.queue
+    octopus_layout = octopusLayout.Import(args.layout)
 
-            num_pos_args -= 2
-            use_rpc = True
-            break
-
-
-    #TODO: Ben's stuff
-    if not use_rpc:
-        queue = Queue.Queue(100)
-        server = UDPServer(queue, None)
-        server.start()
-
-    if num_pos_args == 1:
-        pattern_generator = PatternGenerator(octopus.ImportOctopus(sys.argv[1]), queue)
-    elif num_pos_args == 2:
-        pattern_generator = PatternGenerator(octopus.ImportOctopus(sys.argv[1]), queue, opc_host=sys.argv[2])
-    else:
-        print "Supply octopus.json as first arg"
-        quit()       
-
-    pattern_generator.patterns = [
+    patterns = [
         ShambalaPattern(),
+        EqPattern(),
         SpiralInFast(),
         SpiralOutFast(),
         LavaLampPattern(),
         RpcTestPattern(),
-        EqPattern(),
         RainbowPlaidEqPattern()
     ]
 
-    pattern_generator.run()
+    gentleman_octopus = GentlemanOctopus(octopus_layout, 
+        opc_host=args.host, 
+        opc_port=args.port,
+        patterns=patterns
+    )
+    
+    gentleman_octopus.run(10)
+
+    quit()    
+
+
+
 
