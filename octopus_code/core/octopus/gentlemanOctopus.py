@@ -288,12 +288,13 @@ class KeyMapping:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Make an octopus')
+    parser = argparse.ArgumentParser(description='Runs TGO for pattern funtimes')
     parser.add_argument('-l', '--layout', default=os.path.dirname(__file__) + "/layouts/octopusLayout.json",
                         help='Path to octopus json')
 
     parser.add_argument('-i', '--host', default="127.0.0.1", help="opc host")
     parser.add_argument('-p', '--port', type=int, default=7890, help="opc port")
+    parser.add_argument('-t', '--time', type=int, default=0, help="How long to run TGO for (seconds)")
 
     args = parser.parse_args()
 
@@ -314,8 +315,8 @@ if __name__ == '__main__':
         opc_port=args.port,
         patterns=patterns
     )
-    
-    gentleman_octopus.run(10)
+
+    gentleman_octopus.run(args.time)
 
     quit()    
 
