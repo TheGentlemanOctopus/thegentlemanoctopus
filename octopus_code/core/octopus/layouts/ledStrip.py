@@ -2,7 +2,12 @@ import numpy as np
 from pixel import Pixel
 
 class LedStrip:
+    ''' Represents a strip of addressable leds with nPixels (chromatophores) '''
     def __init__(self, base, length, direction, nPixels):
+        ''' base is the coordinate of the base pixel
+            length is the length of the strip
+            dirrection is a vector of linear strip direction]
+        '''
         self.base = base
         self.length = length
         self.direction = direction/np.linalg.norm(direction)
