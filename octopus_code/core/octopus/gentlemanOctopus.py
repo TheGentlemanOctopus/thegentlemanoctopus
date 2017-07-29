@@ -89,36 +89,6 @@ class GentlemanOctopus(Device):
         #For detecting keyboard presses
         self.kb = kbHit.KBHit()    
 
-    #TODO: Move to device class
-    def run(self, timeout=0):
-        if self.enable_status_monitor:
-            if timeout:
-                print "Generating patterns forever!"
-            else:
-                print "Generating pattern for", timeout, "seconds"
-
-        run_start = time.time()
-
-        # 0 Means forever-and-ever-and-ever
-        if not timeout:
-            timeout = float("inf")
-
-        # Generate the patterns
-        while time.time() - run_start < timeout:
-            loop_start = time.time()
-
-            try:
-                self.update()
-
-            except Exception as e:
-                print e
-
-            loop_end = time.time() - loop_start
-            loop_time = self.period - loop_end
-
-            # Sleep to give time for other processes
-            time.sleep(max(0, self.period - loop_end))
-
 
     #Returns None if we should quit
     def update(self):
