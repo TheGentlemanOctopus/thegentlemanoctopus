@@ -37,7 +37,8 @@ class GentlemanOctopus(Device):
     """
     def __init__(self,
         octopus,
-        queue=None,
+        control_queue=None,
+        audio_stream_queue=None,
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
@@ -49,19 +50,20 @@ class GentlemanOctopus(Device):
         """ octopus is a octopus layout"""
 
         # Initialise Base contructor
+        super(GentlemanOctopus, self).__init__(control_queue, audio_stream_queue)
 
         self.octopus = octopus
 
-        if not queue:
-            queue = Queue.Queue(1)
-
-        self.queue = queue
+        # TODO Should this go on device? I think fft bad output analysis and receive timeouts should 
+        # go on a higher level class
         self.queue_last_receive = 0
         self.queue_receive_timeout = queue_receive_timeout
 
+        # OPC Settings
         self.opc_host = opc_host
         self.opc_port = opc_port
 
+        # This should be in audio stream queue class
         self.rhythm_channel = rhythm_channel
 
         opc_ip = opc_host + ":" + str(opc_port)
@@ -71,12 +73,13 @@ class GentlemanOctopus(Device):
         if not self.client.can_connect():
             raise Exception("Could not connect to opc at " + opc_ip)
 
-        if not patterns:
-            self.patterns = [RpcTestPattern()]
-        else:
-            self.patterns = patterns
+        # Make sure we have some pattern!
+        self.patterns = patterns if patterns else [RpcTestPattern()]
 
+        #TODO Should we enforce a framerate with sleep or just go as fast as possible approach?
         self.period = 1.0/framerate
+
+        #TODO replace Ben's status monitor with my nicer vertical bars   
         self.enable_status_monitor = enable_status_monitor
 
         #Initialise data that's fed into patterns
@@ -86,6 +89,7 @@ class GentlemanOctopus(Device):
         #For detecting keyboard presses
         self.kb = kbHit.KBHit()    
 
+    #TODO: Move to device class
     def run(self, timeout=0):
         if self.enable_status_monitor:
             if timeout:
@@ -132,17 +136,19 @@ class GentlemanOctopus(Device):
                     self.print_status()
 
         # Read from data queue
-        if not self.queue.empty():
+        if not self.audio_stream_queue.empty():
             # Keep it clean and clear
-            with self.queue.mutex:
-                eq = self.queue.queue[-1]["eq"]
-                self.queue.queue.clear() 
+            with self.audio_stream_queue.mutex:
+                eq = self.audio_stream_queue.queue[-1]["eq"]
+                self.audio_stream_queue.queue.clear() 
 
             # TODO: Set bit depth somewhere
             self.pattern_stream_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
             self.queue_last_receive = time.time()
 
+
         # Default Eq data if none is received
+        # TODO: Leave this to higher level data?
         if time.time() - self.queue_last_receive > self.queue_receive_timeout:
             self.pattern_stream_data.siney_time()
 
