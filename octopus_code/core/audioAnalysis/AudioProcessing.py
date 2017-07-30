@@ -29,7 +29,14 @@ class AudioProcessing(threading.Thread):
         self.sim = args['sim']
         ''' create fft '''
         self.dataqueue = Queue.Queue(100)
-        self.server = UDPServer(dataqueue)
+        self.server = UDPServer(
+            dataqueue,
+            arduino_ip = args['Arduino_ip']
+            start_port = args['UDP_start_port'],
+            data_port = args['UDP_data_port'],
+            fft_extent_reset_time = args['AG_fft_extent_reset_time'],
+            autogainEnable = args['AG_Enable'],
+            )
         self.server.start()
         
         ''' create BeatDetection '''
@@ -85,7 +92,7 @@ if __name__ == '__main__':
     d['BE_Enable'] = 1
     d['BD_threshold'] = 85
     d['BD_stretch'] = 18
-    d['AG_Enable'] = 0
+    d['AG_Enable'] = 1
     d['AG_fft_extent_reset_time'] = 30
     d['sim'] = 1
     qs = [Queue.Queue()]
