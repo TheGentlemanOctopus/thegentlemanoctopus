@@ -6,8 +6,12 @@ import unittest
 
 #TODO Clean build
 
-if __name__ == '__main__':
+def main():
+    print "loadinfg"
     unittest.TestLoader().loadTestsFromTestCase(TestIntegrationTest)
     unittest.TestLoader().loadTestsFromTestCase(TestGentlemanOctopus)
 
     unittest.main()
+
+if __name__ == '__main__':
+    main()

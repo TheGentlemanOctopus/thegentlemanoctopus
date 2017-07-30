@@ -48,15 +48,24 @@ class IntegrationTest:
         host="127.0.0.1",
         port=7890
     ):
+    #
+        # Setup udp server
+        # TODO : port setting, queuesize etc.
+        audio_stream_queue = Queue.Queue(100)
+        udp_server = UDPServer(audio_stream_queue)
+        udp_server.start()
 
+        # Gentleman Octopus
         self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(Testopus), 
             framerate=framerate,
             patterns = patterns,
             opc_host=host, 
             opc_port=port,
+            audio_stream_queue=audio_stream_queue
         )
 
         self.filename = filename
+
 
         # Start the cpu meter
         self.cpu_percent = 0
@@ -69,12 +78,8 @@ class IntegrationTest:
         run_start = time.time()
         process = psutil.Process(os.getpid())
 
-        test_file = open(self.filename, "w")
-
-        test_succesful = True
-
-        # Run the Pattern for a bit and log data
-        try: 
+        with open(self.filename, "w") as test_file:
+            # Run the Pattern for a bit and log data
             while time.time() - run_start < run_time:
                 status_string = (
                     "Testing ", self.gentleman_octopus.current_pattern.__class__.__name__, ": ", 
@@ -101,19 +106,6 @@ class IntegrationTest:
                 IntegrationTestData(t, rate, cpu, mem, status).save(test_file)
 
             print "\n"
-
-
-        except Exception as err:
-            test_succesful = False 
-            raise err
-
-        finally:
-            test_file.close()
-
-            if test_succesful:
-                print "Test completed.."
-            else:
-                print "TEST FAILED"
 
     # TODO: Methods to stop cpu meter
     def cpu_fun(self):
@@ -227,13 +219,6 @@ if __name__ == '__main__':
     parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
 
     args = parser.parse_args()
-
-    # Setup udp server
-    # TODO : port setting, queuesize etc.
-    fft_queue = Queue.Queue(100)
-    udp_server = UDPServer(fft_queue)
-    udp_server.start()
-
 
     # Check pattern against the default list
     if args.pattern == "all":

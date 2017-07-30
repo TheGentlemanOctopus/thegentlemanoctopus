@@ -102,7 +102,7 @@ class GentlemanOctopus(Device):
         if not self.audio_stream_queue.empty():
             # Keep it clean and clear
             with self.audio_stream_queue.mutex:
-                eq = self.audio_stream_queue.queue[-1]["eq"]
+                eq = self.audio_stream_queue.queue[-1]
                 self.audio_stream_queue.queue.clear() 
 
             # TODO: Set bit depth somewhere

@@ -56,7 +56,7 @@ class TestGentlemanOctopus(unittest.TestCase):
         self.assertFalse(self.eq_quiet())
 
         # Resets on input
-        self.gentleman_octopus.audio_stream_queue.put({"eq": (0,0,0,0,0,0,0)})
+        self.gentleman_octopus.audio_stream_queue.put((0,0,0,0,0,0,0))
         self.assertTrue(self.eq_quiet())
 
         # Returns to siney time on timeout
