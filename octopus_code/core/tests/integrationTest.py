@@ -46,7 +46,6 @@ class IntegrationTest:
 
         self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(Testopus), 
             framerate=framerate,
-            enable_status_monitor=False,
             patterns = patterns,
             opc_host=host, 
             opc_port=port,
@@ -230,7 +229,8 @@ if __name__ == '__main__':
     elif args.pattern in patternList.pattern_dict:
         patterns = [patternList.pattern_dict[args.pattern]]
     else:
-        print "Unknown pattern", args.pattern
+        print "UNKNOWN PATTERN", args.pattern
+        print "Available Patterns", "\n".join(pattern_dict.keys())
         quit() 
 
     # Choose your mode
