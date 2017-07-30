@@ -12,9 +12,11 @@ from core.udp.udp_server import UDPServer
 AudioProcessing class is used to wrap all audio tasks
 '''
 class AudioProcessing(threading.Thread):
-    """docstring for AudioProcessing"""
+    """docstring for AudioProcessing
+    TODO: check ctl queue
+    """
 
-    def __init__(self, args, queues):
+    def __init__(self, args, op_queues, ctrl_queue=None):
         '''
         args: dictionary from config file for audio
         queues: list of queues to receive audio data
@@ -25,7 +27,8 @@ class AudioProcessing(threading.Thread):
         threading.Thread.__init__(self)
 
         self.channels = args['FFT_channels']
-        self.queues = queues
+        self.queues = op_queues
+        self.ctrl = ctrl_queue
         self.sim = args['sim']
         ''' create fft '''
         self.dataqueue = Queue.Queue(100)

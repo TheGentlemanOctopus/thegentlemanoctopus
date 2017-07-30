@@ -1,13 +1,18 @@
+import threading 
 from Queue import Queue
 import time
 
 # TODO: is there anything outside of the constructor that will actually be shared?
-class Device(object):
+class Device(threading.Thread):
     ''' Generic interface for a sound reactive thing, such as a GentlemanOctopus
     or a school of fish
     '''
     def __init__(self, control_queue=None, audio_stream_queue=None):
         ''' inputs should be queues '''
+        threading.Thread.__init__(self,name=name)
+        self.process = None
+        self.daemon = True
+
         # Initialise queues
         if not control_queue:
             control_queue = Queue(1)
@@ -55,6 +60,6 @@ if __name__ == '__main__':
     audio_stream_queue = Queue(1)
 
     device = Device(control_queue, audio_stream_queue)
-
+    device.start()
     print "Running device...."
-    device.run(2)
+    # device.run(2)
