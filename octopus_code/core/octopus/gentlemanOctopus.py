@@ -8,24 +8,13 @@ import traceback
 
 from core.udp.udp_server import UDPServer
 
-from core.octopus.patterns.shambalaPattern import ShambalaPattern
-
-from core.octopus.patterns.simplePattern import SimplePattern
-from core.octopus.patterns.rpcTestPattern import RpcTestPattern
-from core.octopus.patterns.eqPattern import EqPattern
-from core.octopus.patterns.rainbowPlaidPattern import RainbowPlaidPattern
-from core.octopus.patterns.rainbowPlaidEqPattern import RainbowPlaidEqPattern
-
-#from patterns.solidColorPattern import SolidColorPattern, SpiralOut, PulseOut, IntegrateF, GridPattern, HelicopterEq
-from core.octopus.patterns.spiralOutFast import SpiralOutFast
-from core.octopus.patterns.spiralInFast import SpiralInFast
-
-from core.octopus.patternStreamData import PatternStreamData
-
-from core.octopus.patterns.lavaLampPattern import LavaLampPattern
-
 import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.kbHit as kbHit
+
+import core.octopus.patterns.patternList as patternList
+
+from core.octopus.patterns.rpcTestPattern import RpcTestPattern
+from core.octopus.patternStreamData import PatternStreamData
 
 from core.octopus.rpcServer import RpcServer
 
@@ -303,20 +292,10 @@ if __name__ == '__main__':
 
     octopus_layout = octopusLayout.Import(args.layout)
 
-    patterns = [
-        ShambalaPattern(),
-        EqPattern(),
-        SpiralInFast(),
-        SpiralOutFast(),
-        LavaLampPattern(),
-        RpcTestPattern(),
-        RainbowPlaidEqPattern()
-    ]
-
     gentleman_octopus = GentlemanOctopus(octopus_layout, 
         opc_host=args.host, 
         opc_port=args.port,
-        patterns=patterns
+        patterns=patternList.patterns
     )
 
     gentleman_octopus.run(args.time)

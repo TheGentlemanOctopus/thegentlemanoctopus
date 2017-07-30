@@ -16,6 +16,7 @@ import numpy as np
 
 from core.octopus.patterns.rpcTestPattern import RpcTestPattern
 from core.octopus.patterns.shambalaPattern import ShambalaPattern
+import core.octopus.patterns.patternList as patternList
 
 import core.tests.integrationTestData as integrationTestData
 from core.tests.integrationTestData import IntegrationTestData
@@ -220,11 +221,22 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
     parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
     parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
+    parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
 
     args = parser.parse_args()
 
+    # Check pattern against the default list
+    if args.pattern == "all":
+        patterns = patternList.patterns
+    elif args.pattern in patternList.pattern_dict:
+        patterns = [patternList.pattern_dict[args.pattern]]
+    else:
+        print "Unknown pattern", args.pattern
+        quit() 
+
+    # Choose your mode
     if args.mode == "test":
-        integration_test = IntegrationTest(args.file, patterns=[ShambalaPattern()], host=args.host, port=args.port)
+        integration_test = IntegrationTest(args.file, patterns=patterns, host=args.host, port=args.port)
         integration_test.run(run_time=args.time)
 
     elif args.mode == "plot":

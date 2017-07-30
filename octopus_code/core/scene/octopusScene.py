@@ -57,7 +57,6 @@ class OctopusScene():
         self.ELQueue = Queue.Queue(100)
 
         ''' init devices '''
-
         self.init_audio_input(self.conf_auto_gain)
         self.init_beat_detection(self.conf_beat, self.conf_EL)
 
@@ -83,7 +82,6 @@ class OctopusScene():
             print '\n____[', section, ']____'
             for item in conf[section]:
                 print item, ':', conf[section][item]
-
 
     def init_audio_processing(self, args):
         pass
