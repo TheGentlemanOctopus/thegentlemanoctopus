@@ -1,8 +1,10 @@
 import argparse
 import csv
 import socket
+import time
 
 class StreamCsv:
+    ''' stream a commas separated csv file of fft data''' 
     def __init__(self, filename, host, port, framerate):
         self.filename = filename
         self.host = host
@@ -12,13 +14,20 @@ class StreamCsv:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def stream(self):
+        '''endlessly streams'''
         while True:
             with open(self.filename) as file:
                 for row in file:
                     self.socket.sendto(row, (self.host, self.port))
 
+                    #TODO account for socket send
+                    time.sleep(1.0/self.framerate)
+
+
+
 
 if __name__ == '__main__':
+    # Argin the parsin
     parser = argparse.ArgumentParser(description="Stream the FFT")
     parser.add_argument('--host', default='192.168.1.177', help="Host")
     #5009?
@@ -28,6 +37,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Stream it up!
     stream_csv = StreamCsv(args.file, args.host, args.port, args.framerate)
     stream_csv.stream()
 
