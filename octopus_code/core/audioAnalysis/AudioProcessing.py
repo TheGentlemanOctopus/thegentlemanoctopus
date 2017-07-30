@@ -2,9 +2,11 @@ import threading
 import socket
 import Queue
 import time
+import random
 
 from core.audioAnalysis.BeatDetection import BeatDetection
 from core.udp.udp_server import UDPServer
+
 
 '''
 AudioProcessing class is used to wrap all audio tasks
@@ -22,7 +24,9 @@ class AudioProcessing(threading.Thread):
         self.stop  = threading.Event()
         threading.Thread.__init__(self)
 
-
+        self.channels = args['FFT_channels']
+        self.queues = queues
+        self.sim = args['sim']
         ''' create fft '''
         self.dataqueue = Queue.Queue(100)
         self.server = UDPServer(dataqueue)
@@ -33,15 +37,18 @@ class AudioProcessing(threading.Thread):
 
 
     def terminate(self):
+        ''' to raise flag '''
         self.stop.set()
 
     def run(self):
-
+        ''' main worker method '''
         try:
             while(not self.stop.wait(0.01)):
-                
-                if not self.dataqueue.empty():
-                    
+                ''' simulated '''
+                if self.sim:
+                    self.simulate()
+                ''' real '''                
+                elif not self.dataqueue.empty():
                     fft_data = self.dataqueue.queue[-1]
                     with self.dataqueue.mutex:
                         self.dataqueue.queue.clear()
@@ -50,7 +57,7 @@ class AudioProcessing(threading.Thread):
                     beat_data = self.bd.detectBeat(fft_data)
 
                     ''' then pass through each queue in list '''
-                    for q in queues:
+                    for q in self.queues:
                         with q.mutex:
                             q.queue.clear()
                         q.put(fft_data+beat_data)
@@ -60,6 +67,15 @@ class AudioProcessing(threading.Thread):
             self._running_flag = False
 
 
+    def simulate(self):
+        ''' for simulating data when hardware is not attached '''
+
+        fft_data = [random.randint(0,10) for x in xrange(self.channels)]
+        bd_data = [bool(random.getrandbits(1)) for x in xrange(self.channels)]
+        for q in self.queues:
+            with q.mutex:
+                q.queue.clear()
+            q.put(fft_data+bd_data)
 
 
 
