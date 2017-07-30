@@ -2,6 +2,9 @@ import opc
 import time
 import sys
 import Queue
+import os
+import traceback
+
 
 from core.udp.udp_server import UDPServer
 
@@ -21,20 +24,25 @@ from core.octopus.patternStreamData import PatternStreamData
 
 from core.octopus.patterns.lavaLampPattern import LavaLampPattern
 
-import core.octopus.layouts.octopus as octopus
+import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.kbHit as kbHit
 
 from core.octopus.rpcServer import RpcServer
 
+from device import Device
+import argparse
+
 import numpy as np
 
 #Generate patterns and send to a OPC host
-#Strict throws exceptions if it cannot keep up
-#with framerates or if patterns are unstable
-class PatternGenerator:
+class GentlemanOctopus(Device):
+    """a GentlemanOctopus is responsible for generating patterns
+    and projecting those colors onto its chromatophores (opc host)
+    """
     def __init__(self,
-        octopus,
-        queue=None,
+        octopus_layout,
+        control_queue=None,
+        audio_stream_queue=None,
         opc_host="127.0.0.1", 
         opc_port=7890,
         rhythm_channel = 0,
@@ -43,18 +51,23 @@ class PatternGenerator:
         queue_receive_timeout=10,
         patterns = None
     ):
-        self.octopus = octopus
+        """ octopus is a octopus layout"""
 
-        if not queue:
-            queue = Queue.Queue(1)
+        # Initialise Base contructor
+        super(GentlemanOctopus, self).__init__(control_queue, audio_stream_queue)
 
-        self.queue = queue
+        self.octopus_layout = octopus_layout
+
+        # TODO Should this go on device? I think fft bad output analysis and receive timeouts should 
+        # go on a higher level class
         self.queue_last_receive = 0
         self.queue_receive_timeout = queue_receive_timeout
 
+        # OPC Settings
         self.opc_host = opc_host
         self.opc_port = opc_port
 
+        # TODO This should be in audio stream queue class
         self.rhythm_channel = rhythm_channel
 
         opc_ip = opc_host + ":" + str(opc_port)
@@ -64,12 +77,13 @@ class PatternGenerator:
         if not self.client.can_connect():
             raise Exception("Could not connect to opc at " + opc_ip)
 
-        if not patterns:
-            self.patterns = [RpcTestPattern()]
-        else:
-            self.patterns = patterns
+        # Make sure we have some pattern!
+        self.patterns = patterns if patterns else [RpcTestPattern()]
 
+        #TODO Should we enforce a framerate with sleep or just go as fast as possible approach?
         self.period = 1.0/framerate
+
+        #TODO replace Ben's status monitor with my nicer vertical bars   
         self.enable_status_monitor = enable_status_monitor
 
         #Initialise data that's fed into patterns
@@ -78,35 +92,6 @@ class PatternGenerator:
         
         #For detecting keyboard presses
         self.kb = kbHit.KBHit()    
-
-    def run(self, timeout=0):
-        if self.enable_status_monitor:
-            if timeout:
-                print "Generating patterns forever!"
-            else:
-                print "Generating pattern for", timeout, "seconds"
-
-        run_start = time.time()
-
-        # 0 Means forever-and-ever-and-ever
-        if not timeout:
-            timeout = float("inf")
-
-        # Generate the patterns
-        while time.time() - run_start < timeout:
-            loop_start = time.time()
-
-            try:
-                self.update()
-
-            except Exception as e:
-                print e
-
-            loop_end = time.time() - loop_start
-            loop_time = self.period - loop_end
-
-            # Sleep to give time for other processes
-            time.sleep(max(0, self.period - loop_end))
 
 
     #Returns None if we should quit
@@ -125,26 +110,29 @@ class PatternGenerator:
                     self.print_status()
 
         # Read from data queue
-        if not self.queue.empty():
+        if not self.audio_stream_queue.empty():
             # Keep it clean and clear
-            with self.queue.mutex:
-                eq = self.queue.queue[-1]["eq"]
-                self.queue.queue.clear() 
+            with self.audio_stream_queue.mutex:
+                eq = self.audio_stream_queue.queue[-1]["eq"]
+                self.audio_stream_queue.queue.clear() 
 
             # TODO: Set bit depth somewhere
             self.pattern_stream_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
             self.queue_last_receive = time.time()
 
+
         # Default Eq data if none is received
+        # TODO: Leave this to higher level data?
         if time.time() - self.queue_last_receive > self.queue_receive_timeout:
             self.pattern_stream_data.siney_time()
 
         # Send some pixels
         try:
-            self.current_pattern.next_frame(self.octopus, self.pattern_stream_data)
-            pixels = [pixel.color for pixel in self.octopus.pixels_zig_zag()]
+            self.current_pattern.next_frame(self.octopus_layout, self.pattern_stream_data)
+            pixels = [pixel.color for pixel in self.octopus_layout.pixels_zig_zag()]
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            print traceback.format_exc()
             raise e
 
         self.client.put_pixels(pixels, channel=1)
@@ -178,8 +166,8 @@ class PatternGenerator:
 
         # Switch the pattern
         self.current_pattern = self.patterns[index]
-        self.current_pattern.on_pattern_select(self.octopus)
-        self.octopus.clear_pixels()
+        self.current_pattern.on_pattern_select(self.octopus_layout)
+        self.octopus_layout.clear_pixels()
 
         #Set Key mappings for new parameters
         key_mapping = [
@@ -303,48 +291,38 @@ class KeyMapping:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Runs TGO for pattern funtimes')
+    parser.add_argument('-l', '--layout', default=os.path.dirname(__file__) + "/layouts/octopusLayout.json",
+                        help='Path to octopus json')
 
-    #TODO Pretty args
-    #Determine if using rpc or not
-    use_rpc = False
+    parser.add_argument('-i', '--host', default="127.0.0.1", help="opc host")
+    parser.add_argument('-p', '--port', type=int, default=7890, help="opc port")
+    parser.add_argument('-t', '--time', type=int, default=0, help="How long to run TGO for (seconds)")
 
-    num_pos_args = len(sys.argv)-1
-    for i in range(num_pos_args):
-        if sys.argv[i] == "--rpc":
-            host = sys.argv[i+1]
+    args = parser.parse_args()
 
-            rpc_server = RpcServer(host="127.0.0.1", port=8000)
-            rpc_server.start()
-            queue = rpc_server.queue
+    octopus_layout = octopusLayout.Import(args.layout)
 
-            num_pos_args -= 2
-            use_rpc = True
-            break
-
-
-    #TODO: Ben's stuff
-    if not use_rpc:
-        queue = Queue.Queue(100)
-        server = UDPServer(queue, None)
-        server.start()
-
-    if num_pos_args == 1:
-        pattern_generator = PatternGenerator(octopus.ImportOctopus(sys.argv[1]), queue)
-    elif num_pos_args == 2:
-        pattern_generator = PatternGenerator(octopus.ImportOctopus(sys.argv[1]), queue, opc_host=sys.argv[2])
-    else:
-        print "Supply octopus.json as first arg"
-        quit()       
-
-    pattern_generator.patterns = [
+    patterns = [
         ShambalaPattern(),
+        EqPattern(),
         SpiralInFast(),
         SpiralOutFast(),
         LavaLampPattern(),
         RpcTestPattern(),
-        EqPattern(),
         RainbowPlaidEqPattern()
     ]
 
-    pattern_generator.run()
+    gentleman_octopus = GentlemanOctopus(octopus_layout, 
+        opc_host=args.host, 
+        opc_port=args.port,
+        patterns=patterns
+    )
+
+    gentleman_octopus.run(args.time)
+
+    quit()    
+
+
+
 

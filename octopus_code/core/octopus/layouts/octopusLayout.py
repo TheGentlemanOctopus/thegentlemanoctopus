@@ -2,44 +2,57 @@ import numpy as np
 import json
 import os
 
-#TODO: color mappings
+from tentacle import Tentacle
 
-class Octopus:
-    def __init__(self, mantle_radius, leg_length, pixels_per_strip):
+
+#TODO: color mappings
+class OctopusLayout:
+    ''' An octopus layout represents the morphology and spatial distribution of its chromatophores'''
+    def __init__(self, mantle_radius, tentacle_length, pixels_per_strip):
+        ''' mantle_radius is the radius of its mantle 
+            tentacle_length is the unit length of each tentacle
+            each tentacle has two led_strips each with pixels_per_strip chromatophores
+        ''' 
         self.mantle_radius = mantle_radius
-        self.leg_length = leg_length
+        self.tentacle_length = tentacle_length
         self.pixels_per_strip = pixels_per_strip
 
-        self.legs = []
-
+        # Cotruct Tentacles
+        self.tentacles = []
         for theta in np.linspace(0, (14.0/8.0)*np.pi, 8):
-            self.legs.append(Leg(mantle_radius, theta, leg_length, pixels_per_strip))
+            self.tentacles.append(Tentacle(mantle_radius, theta, tentacle_length, pixels_per_strip))
 
     def clone(self):
-        return Octopus(self.mantle_radius, self.leg_length, self.pixels_per_strip)
+        ''' create a new identical octopus layout from an existing one'''
+        return OctopusLayout(self.mantle_radius, self.tentacle_length, self.pixels_per_strip)
 
     def pixels(self):
+        ''' returns list of all pixels by concatenating along each strip from base-->tip, base-->tip '''
         pixels = []
-        for leg in self.legs:
+        for leg in self.tentacles:
             pixels.extend(leg.pixels())
 
         return pixels
 
-    # Base --> Tip; Tip --> Base, Base --> Tip ....
     def pixels_zig_zag(self):
+        ''' returns list of all pixels by concatenating along each strip from base-->tip, tip-->base etc.. '''
         pixels = []
-        for leg in self.legs:
-            pixels.extend(leg.pixels_zig_zag())
+        for tentacle in self.tentacles:
+            pixels.extend(tentacle.pixels_zig_zag())
 
         return pixels
 
     def pixels_spiral(self):
+        ''' return list of pixels in an outward spiral like fashion '''
+
+        # Create list of all pixels
         pixels = []
 
         led_strips = []
-        for leg in self.legs:
-            led_strips.extend(leg.led_strips)
+        for tentacle in self.tentacles:
+            led_strips.extend(tentacle.led_strips)
 
+        # Spiral Town
         count = -1
         traversed_count = 0
         while traversed_count < len(led_strips):
@@ -58,30 +71,34 @@ class Octopus:
         return pixels
 
 
-
     def export(self, filepath):
-        #Hacky, but gl_server doesn't mind
-        #and I don't want to edit the gl_server right now
+        ''' Export octopus into a json file that is compatible with gl server and import '''
+        
+        # Include metadata in the first pixel object
+        # TODO: a bit hacky is there a better way?
         pixels = [{'point': pixel.location.tolist()} for pixel in self.pixels_zig_zag()]
         pixels[0]['metadata'] = {
             'mantle_radius': self.mantle_radius,
-            'leg_length' : self.leg_length,
+            'tentacle_length' : self.tentacle_length,
             'pixels_per_strip': self.pixels_per_strip
         } 
         
+        # Dump to file
         with open(os.path.join(os.path.dirname(__file__), filepath), 'w') as f:
             f.write(json.dumps(pixels, indent=4))
     
         print "Output File: ", len(pixels)-1, "pixels"
     
     def clear_pixels(self):
+        ''' resets all pixels to black '''
         for pixel in self.pixels():
             pixel.color = (0,0,0)
 
     def pixel_colors(self):
         return [pixel.color for pixel in self.pixels()]
 
-def ImportOctopus(filepath):
+def Import(filepath):
+    ''' contructs a octopus layout from a json file created by OctopusLayout.export '''
     try:
         with open(filepath) as data_file:    
             data = json.load(data_file)
@@ -94,64 +111,20 @@ def ImportOctopus(filepath):
 
     metadata = data[0]["metadata"]
 
-    return Octopus(
+    return OctopusLayout(
         metadata["mantle_radius"], 
-        metadata["leg_length"],
+        metadata["tentacle_length"],
         metadata["pixels_per_strip"] 
         )
 
-class Leg:
-    def __init__(self, r, theta, length, nPixels):
-        self.led_strips = []
 
-        dTheta = np.pi/32
-        for angle in [theta + dTheta, theta - dTheta]:
-            base = [r*np.cos(angle), r*np.sin(angle), 0]
-            direction = [np.cos(angle), np.sin(angle), 0]
-            self.led_strips.append(LedStrip(base, length, direction, nPixels))
-
-    def pixels(self):
-        pixels = []
-        for led_strip in self.led_strips:
-            pixels.extend(led_strip.pixels)
-
-        return pixels
-
-    # Base --> Tip; Tip --> Base, Base --> Tip ....
-    def pixels_zig_zag(self):
-        pixels = []
-        flip = False
-        for led_strip in self.led_strips:
-            pixels.extend(led_strip.pixels[::-1] if flip else led_strip.pixels)
-            flip = not flip
-
-        return pixels
-
-class LedStrip:
-    def __init__(self, base, length, direction, nPixels):
-        self.base = base
-        self.length = length
-        self.direction = direction/np.linalg.norm(direction)
-        
-        dP = (self.length/float(nPixels - 1)) * self.direction
-        self.pixels = [Pixel(self.base + i*dP) for i in range(nPixels)]
-
-    #Always starting from the base, excess pixels/colored are ignored
-    def put_pixels(self, colors):
-        for i in range(np.min([len(self.pixels), len(colors)])):
-            self.pixels[i].color = colors[i]
-
-class Pixel:
-    def __init__(self, location, color=(0,0,0)):
-        self.location = location
-        self.color = color
-
-def plot_octopus(octopus):
+def plot_octopus(octopus_layout):
+    ''' MPL plots Ffor testing '''
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
 
-    pixels = octopus.generate_pixel_locations()
+    pixels = octopus_layout.generate_pixel_locations()
     x = [pixel[0] for pixel in pixels]
     y = [pixel[1] for pixel in pixels]
     z = [pixel[2] for pixel in pixels]
@@ -163,12 +136,12 @@ def plot_octopus(octopus):
 
 # Just your everyday octopus :)
 if __name__ == '__main__':
-    octopus = Octopus(0.5, 3, 31)
+    octopus = OctopusLayout(0.5, 3, 31)
 
-    filepath = 'octopus.json'
+    filepath = 'octopusLayout.json'
     octopus.export(filepath)
 
     # How to import octopuses
-    #new_octopus = ImportOctopus(filepath)
+    #new_octopus = Import(filepath)
     #new_octopus.export(filepath)
 

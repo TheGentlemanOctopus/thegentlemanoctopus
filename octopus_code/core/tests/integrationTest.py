@@ -1,5 +1,5 @@
-import core.octopus.patternGenerator as pg
-import core.octopus.layouts.octopus as octopus
+import core.octopus.gentlemanOctopus as gentlemanOctopus
+import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.opc
 
 import os
@@ -10,6 +10,7 @@ import time
 import csv
 import argparse
 import threading
+import traceback 
 
 import numpy as np
 
@@ -18,6 +19,10 @@ from core.octopus.patterns.shambalaPattern import ShambalaPattern
 
 import core.tests.integrationTestData as integrationTestData
 from core.tests.integrationTestData import IntegrationTestData
+
+from utils import Testopus
+
+import subprocess
 
 # matplotlib may not work on the odroid
 try:
@@ -28,24 +33,25 @@ try:
 except Exception as e:
     plotting = False
 
-Testopus = "./core/tests/test_octopus.json" 
-Test_File = "./core/tests/test_data.csv"
 
 class IntegrationTest:
-    def __init__(self, 
+    def __init__(self,
+        filename, 
         framerate=20, 
         patterns = None,
         host="127.0.0.1",
         port=7890
     ):
 
-        self.pattern_generator = pg.PatternGenerator(octopus.ImportOctopus(Testopus), 
+        self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(Testopus), 
             framerate=framerate,
             enable_status_monitor=False,
             patterns = patterns,
             opc_host=host, 
             opc_port=port,
         )
+
+        self.filename = filename
 
         # Start the cpu meter
         self.cpu_percent = 0
@@ -57,7 +63,8 @@ class IntegrationTest:
     def run(self, run_time=10):        
         run_start = time.time()
         process = psutil.Process(os.getpid())
-        test_file = open(Test_File, "w")
+
+        test_file = open(self.filename, "w")
 
         test_succesful = True
 
@@ -65,7 +72,7 @@ class IntegrationTest:
         try: 
             while time.time() - run_start < run_time:
                 status_string = (
-                    "Testing ", self.pattern_generator.current_pattern.__class__.__name__, ": ", 
+                    "Testing ", self.gentleman_octopus.current_pattern.__class__.__name__, ": ", 
                     int(time.time() - run_start), "s",
                     " of ", 
                     str(run_time), "s"
@@ -78,14 +85,14 @@ class IntegrationTest:
                 loop_start = time.time()
 
 
-                self.pattern_generator.update()
+                self.gentleman_octopus.update()
 
                 rate = 1/(time.time() - loop_start)
                 t = loop_start - run_start
                 mem = process.memory_percent()
                 cpu = self.get_cpu()
 
-                status = self.pattern_generator.current_pattern.status()
+                status = self.gentleman_octopus.current_pattern.status()
 
                 IntegrationTestData(t, rate, cpu, mem, status).save(test_file)
 
@@ -118,8 +125,13 @@ class IntegrationTest:
 
         return cpu_percent
 
-def print_results(filename):
-    results = integrationTestData.load_csv(filename)
+# TODO: Put this in utils?
+def plot_dashes(x_locations):
+    for x in x_locations:
+        plt.axvline(x, color='k', linestyle='dashed', linewidth=1)
+
+def print_results(filename, sample_period):
+    results = integrationTestData.load_csv(filename, sample_period=sample_period)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]
@@ -130,13 +142,8 @@ def print_results(filename):
     print "Max mem", np.max(mem)
     print "Max CPU", np.max(cpu)
 
-# TODO: Put this in utils?
-def plot_dashes(x_locations):
-    for x in x_locations:
-        plt.axvline(x, color='k', linestyle='dashed', linewidth=1)
-
-def plot_results(filename):
-    results = integrationTestData.load_csv(filename)
+def plot_results(filename, sample_period):
+    results = integrationTestData.load_csv(filename, sample_period=sample_period)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]
@@ -187,7 +194,7 @@ def plot_results(filename):
     plt.gca().yaxis.grid(True)
     plt.yticks(range(len(unique_names)), unique_names)
 
-    print_results(filename)
+    print_results(filename, sample_period)
 
     plt.show()
 
@@ -207,25 +214,26 @@ if __name__ == '__main__':
         'print: print test metrics'
     )
 
-    parser.add_argument('-t', type=int, help="Time to test for in seconds", default=5)
+    parser.add_argument('-t', '--time', default=5, type=int, help="Time to test for in seconds")
 
-    parser.add_argument('-i', help="Time to test for in seconds", default="127.0.0.1")
-    parser.add_argument('-p', type=int, help="Time to test for in seconds", default=7890)
+    parser.add_argument('-i', '--host', help="Host", default="127.0.0.1")
+    parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
+    parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
+    parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
 
-    
     args = parser.parse_args()
 
     if args.mode == "test":
-        integration_test = IntegrationTest(patterns=[ShambalaPattern()], host=args.i, port=args.p)
-        integration_test.run(run_time=args.t)
+        integration_test = IntegrationTest(args.file, patterns=[ShambalaPattern()], host=args.host, port=args.port)
+        integration_test.run(run_time=args.time)
 
     elif args.mode == "plot":
         if not plotting:
             print "Cannot import Matplotlib on this device"
-        plot_results(Test_File)
+        plot_results(args.file, args.sample_period)
 
     elif args.mode =="print":
-        print_results(Test_File)
+        print_results(args.file, args.sample_period)
 
     else:
         print parser.print_help()

@@ -1,1 +1,1 @@
-Testopus = "./core/tests/test_octopus.json"
+Testopus = "./core/octopus/layouts/octopusLayout.json"

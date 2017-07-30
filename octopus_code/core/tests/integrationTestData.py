@@ -1,5 +1,6 @@
 import csv
-
+import subprocess
+import numpy as np
 
 class IntegrationTestData:
     def __init__(self, t, framerate, cpu, mem, pattern_name):
@@ -15,8 +16,22 @@ class IntegrationTestData:
         data = [self.t, self.framerate, self.cpu, self.mem, self.pattern_name]
         file_handle.write(",".join([str(x) for x in data]) + '\n')
 
-# Retruns a list of SpeedTestData objects
-def load_csv(filename):
+# Returns a list of SpeedTestData objects,
+# Sample period is test time in seconds between row captures
+def load_csv(filename, sample_period=0):
+
+    previous_take = -np.inf
+
+    time_series = []
+
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
-        return [IntegrationTestData(*row) for row in csvreader]
+
+        for row in csvreader:
+            data = IntegrationTestData(*row)
+
+            if data.t - previous_take > sample_period:
+                time_series.append(data)
+                previous_take = data.t
+
+    return time_series

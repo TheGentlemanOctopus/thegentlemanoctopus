@@ -1,9 +1,9 @@
 [
     {
         "metadata": {
-            "leg_length": 3, 
             "mantle_radius": 0.5, 
-            "pixels_per_strip": 31
+            "pixels_per_strip": 31, 
+            "tentacle_length": 3
         }, 
         "point": [
             0.49759236333609846, 
