@@ -1,5 +1,6 @@
 import argparse
 import csv
+import socket
 
 class StreamCsv:
     def __init__(self, filename, host, port, framerate):
@@ -8,17 +9,13 @@ class StreamCsv:
         self.port = port
         self.framerate = framerate
 
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
     def stream(self):
         while True:
-            with open(self.filename) as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            
-                for row in reader:
-                    fft = [int(item) for item in row]
-                    print fft
-
-
-
+            with open(self.filename) as file:
+                for row in file:
+                    self.socket.sendto(row, (self.host, self.port))
 
 
 if __name__ == '__main__':
