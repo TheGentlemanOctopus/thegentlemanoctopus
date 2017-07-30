@@ -56,6 +56,7 @@ class OctopusScene():
         self.fftQueue = Queue.Queue(100) # not used
         self.ELQueue = Queue.Queue(100)
 
+        ''' init devices '''
         self.init_audio_input(self.conf_auto_gain)
         self.init_beat_detection(self.conf_beat, self.conf_EL)
 
