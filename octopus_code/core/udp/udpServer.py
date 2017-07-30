@@ -28,8 +28,6 @@ class UDPServer(threading.Thread):
         no_mic_level = 100,
         ):
 
-        print local_ip
-        print "-----------"
         self.arduino_ip = arduino_ip
         self.local_ip = local_ip
         self.start_port = start_port
@@ -74,7 +72,6 @@ class UDPServer(threading.Thread):
         if self.connected == False:
             try:
                 self.sock.sendto(self.start_message, (self.arduino_ip, self.start_port))
-                print "sending message:", self.start_message
             except:
                 self.FFTData = "0,0,0,0,0,0,0"
 
@@ -91,9 +88,7 @@ class UDPServer(threading.Thread):
     def run(self):
 
         while True:
-
             self.udp_reader()
-
 
             # Parse the data csv style
             parsedData = self.FFTData.split(",", self.num_fft_chan)
@@ -126,8 +121,6 @@ class UDPServer(threading.Thread):
                     parsedData = [0,0,0,0,0,0,0]
                     break
 
-
-            print parsedData
 
             if self.max_fft > self.no_mic_level:
                 self.no_sound = False

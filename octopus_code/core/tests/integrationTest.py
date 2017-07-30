@@ -11,6 +11,7 @@ import csv
 import argparse
 import threading
 import traceback 
+import Queue
 
 import numpy as np
 
@@ -23,6 +24,8 @@ import core.tests.integrationTestData as integrationTestData
 from core.tests.integrationTestData import IntegrationTestData
 
 from utils import Testopus
+
+from core.udp.udpServer import UDPServer
 
 
 import subprocess
@@ -224,6 +227,13 @@ if __name__ == '__main__':
     parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
 
     args = parser.parse_args()
+
+    # Setup udp server
+    # TODO : port setting, queuesize etc.
+    fft_queue = Queue.Queue(100)
+    udp_server = UDPServer(fft_queue)
+    udp_server.start()
+
 
     # Check pattern against the default list
     if args.pattern == "all":
