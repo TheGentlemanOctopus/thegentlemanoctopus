@@ -92,7 +92,7 @@ class LavaLampPattern(Pattern):
 
         # color scheme: fade towards blue-and-orange
     #     g = (r+b) / 2
-        g = g * 0.6 + ((r+b) / 2) * 0.4
+        g = g * 0.6 + (r+b) * 0.2
 
         r *= 256
         g *= 256

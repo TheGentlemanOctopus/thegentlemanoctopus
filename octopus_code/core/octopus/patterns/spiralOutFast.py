@@ -7,10 +7,7 @@ import collections
 import time
 from collections import deque
 
-import color_utils
 
-#This was an idea that didnt really work out. Could remove.
-#TODO: params
 class SpiralOutFast(Pattern):
     def __init__(self):
         self.register_param("r_leak", 0, 3, 1.2)
@@ -19,6 +16,7 @@ class SpiralOutFast(Pattern):
 
         self.register_param("speed", 0, 1 , 0)
 
+        #Initialise time and color history
         self.t = np.array([0,0], dtype=np.float16)
         self.r = np.array([0,0], dtype=np.float16)
         self.g = np.array([0,0], dtype=np.float16)
@@ -33,7 +31,7 @@ class SpiralOutFast(Pattern):
         self.previous_time = np.float16(time.time())
 
         #TODO: Param
-        self.domain = color_utils.linspace_16(0,1,len(self.pixels))
+        self.domain = np.linspace(0,1,len(self.pixels))
 
 
     def next_frame(self, octopus, data):
@@ -52,15 +50,14 @@ class SpiralOutFast(Pattern):
         self.b = np.append(self.b, scale*np.mean([eq[4], eq[5],eq[6]], dtype=np.float16))
 
         if len(self.t) > self.buff_len:
-            self.t.pop(0)
-            self.r.pop(0)
-            self.g.pop(0)
-            self.b.pop(0)
+            self.t = np.delete(self.t, 0)
+            self.r = np.delete(self.r, 0)
+            self.g = np.delete(self.g, 0)
+            self.b = np.delete(self.b, 0)
 
-
-        domain_r = color_utils.linspace_16(current_time, current_time - self.r_leak, len(self.pixels)) 
-        domain_g = color_utils.linspace_16(current_time, current_time - self.g_leak, len(self.pixels)) 
-        domain_b = color_utils.linspace_16(current_time, current_time - self.b_leak, len(self.pixels)) 
+        domain_r = np.linspace(current_time, current_time - self.r_leak, len(self.pixels)) 
+        domain_g = np.linspace(current_time, current_time - self.g_leak, len(self.pixels)) 
+        domain_b = np.linspace(current_time, current_time - self.b_leak, len(self.pixels)) 
 
         r = np.interp(domain_r, self.t, self.r)
         g = np.interp(domain_r, self.t, self.g)

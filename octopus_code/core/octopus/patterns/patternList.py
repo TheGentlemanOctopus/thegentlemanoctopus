@@ -8,7 +8,7 @@ from rainbowPlaidEqPattern import RainbowPlaidEqPattern
 from spiralOutFast import SpiralOutFast
 from spiralInFast import SpiralInFast
 from lavaLampPattern import LavaLampPattern
-
+from lavaLampPattern2 import LavaLampPattern2
 
 
 patterns = [
@@ -18,7 +18,8 @@ patterns = [
     SpiralOutFast(),
     LavaLampPattern(),
     RpcTestPattern(),
-    RainbowPlaidEqPattern()
+    RainbowPlaidEqPattern(),
+    LavaLampPattern2()
 ]
 
 pattern_dict = {}
