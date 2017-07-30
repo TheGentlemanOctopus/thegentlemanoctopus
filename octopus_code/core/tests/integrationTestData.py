@@ -20,8 +20,18 @@ class IntegrationTestData:
 # Sample period is test time in seconds between row captures
 def load_csv(filename, sample_period=0):
 
-    previos_take = np.inf
+    previous_take = -np.inf
+
+    time_series = []
 
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
-        data = [IntegrationTestData(*row) for row in csvreader]
+
+        for row in csvreader:
+            data = IntegrationTestData(*row)
+
+            if data.t - previous_take > sample_period:
+                time_series.append(data)
+                previous_take = data.t
+
+    return time_series

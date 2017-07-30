@@ -125,9 +125,13 @@ class IntegrationTest:
 
         return cpu_percent
 
+# TODO: Put this in utils?
+def plot_dashes(x_locations):
+    for x in x_locations:
+        plt.axvline(x, color='k', linestyle='dashed', linewidth=1)
 
-def print_results(filename):
-    results = integrationTestData.load_csv(filename)
+def print_results(filename, sample_period):
+    results = integrationTestData.load_csv(filename, sample_period=sample_period)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]
@@ -138,13 +142,8 @@ def print_results(filename):
     print "Max mem", np.max(mem)
     print "Max CPU", np.max(cpu)
 
-# TODO: Put this in utils?
-def plot_dashes(x_locations):
-    for x in x_locations:
-        plt.axvline(x, color='k', linestyle='dashed', linewidth=1)
-
-def plot_results(filename):
-    results = integrationTestData.load_csv(filename)
+def plot_results(filename, sample_period):
+    results = integrationTestData.load_csv(filename, sample_period=sample_period)
 
     t = [result.t for result in results]
     framerate = [result.framerate for result in results]
@@ -195,7 +194,7 @@ def plot_results(filename):
     plt.gca().yaxis.grid(True)
     plt.yticks(range(len(unique_names)), unique_names)
 
-    print_results(filename)
+    print_results(filename, sample_period)
 
     plt.show()
 
@@ -220,8 +219,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--host', help="Host", default="127.0.0.1")
     parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
     parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
+    parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
 
-    
     args = parser.parse_args()
 
     if args.mode == "test":
@@ -231,10 +230,10 @@ if __name__ == '__main__':
     elif args.mode == "plot":
         if not plotting:
             print "Cannot import Matplotlib on this device"
-        plot_results(args.file)
+        plot_results(args.file, args.sample_period)
 
     elif args.mode =="print":
-        print_results(args.file)
+        print_results(args.file, args.sample_period)
 
     else:
         print parser.print_help()

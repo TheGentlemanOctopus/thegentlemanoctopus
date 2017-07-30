@@ -17,7 +17,7 @@ from mock import patch, MagicMock
 
 class TestGentlemanOctopus(unittest.TestCase):
 
-    # Mock OPC connectionc
+    # Mock OPC connection
     def setUp(self):
         patcher = patch('core.octopus.opc.Client')
         opc_mock = patcher.start()
