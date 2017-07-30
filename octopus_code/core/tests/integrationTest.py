@@ -10,6 +10,7 @@ import time
 import csv
 import argparse
 import threading
+import traceback 
 
 import numpy as np
 
@@ -20,6 +21,8 @@ import core.tests.integrationTestData as integrationTestData
 from core.tests.integrationTestData import IntegrationTestData
 
 from utils import Testopus
+
+import subprocess
 
 # matplotlib may not work on the odroid
 try:
@@ -122,6 +125,7 @@ class IntegrationTest:
 
         return cpu_percent
 
+
 def print_results(filename):
     results = integrationTestData.load_csv(filename)
 
@@ -211,7 +215,7 @@ if __name__ == '__main__':
         'print: print test metrics'
     )
 
-    parser.add_argument('-t', '--time', type=int, help="Time to test for in seconds", default=5)
+    parser.add_argument('-t', '--time', default=5, type=int, help="Time to test for in seconds")
 
     parser.add_argument('-i', '--host', help="Host", default="127.0.0.1")
     parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
@@ -221,16 +225,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == "test":
-        integration_test = IntegrationTest(patterns=[ShambalaPattern()], host=args.i, port=args.p)
-        integration_test.run(args.test_file, run_time=args.t)
+        integration_test = IntegrationTest(args.file, patterns=[ShambalaPattern()], host=args.host, port=args.port)
+        integration_test.run(run_time=args.time)
 
     elif args.mode == "plot":
         if not plotting:
             print "Cannot import Matplotlib on this device"
-        plot_results(args.test_file)
+        plot_results(args.file)
 
     elif args.mode =="print":
-        print_results(args.test_file)
+        print_results(args.file)
 
     else:
         print parser.print_help()

@@ -23,10 +23,10 @@ class EqPattern(Pattern):
 
         eq = itertools.cycle(data.eq)
 
-        for leg in octopus.legs:
+        for tentacle in octopus.tentacles:
             level = next(eq)
 
-            for led_strip in leg.led_strips:
+            for led_strip in tentacle.led_strips:
                 pixel_colors = []
 
                 n_meter_pixels = int(len(led_strip.pixels)*float(level))
