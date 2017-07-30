@@ -87,7 +87,7 @@ if __name__ == '__main__':
     d['BD_stretch'] = 18
     d['AG_Enable'] = 0
     d['AG_fft_extent_reset_time'] = 30
-
+    d['sim'] = 1
     qs = [Queue.Queue()]
 
     ap = AudioProcessing(d,qs)
