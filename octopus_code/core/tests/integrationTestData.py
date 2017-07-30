@@ -17,6 +17,7 @@ class IntegrationTestData:
 
 # Retruns a list of SpeedTestData objects
 def load_csv(filename):
+    print "writing"
     with open(filename, 'rb') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
         return [IntegrationTestData(*row) for row in csvreader]

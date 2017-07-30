@@ -30,10 +30,10 @@ try:
 except Exception as e:
     plotting = False
 
-Test_File = "./core/tests/test_data.csv"
 
 class IntegrationTest:
-    def __init__(self, 
+    def __init__(self,
+        filename, 
         framerate=20, 
         patterns = None,
         host="127.0.0.1",
@@ -48,6 +48,8 @@ class IntegrationTest:
             opc_port=port,
         )
 
+        self.filename = filename
+
         # Start the cpu meter
         self.cpu_percent = 0
         self.lock = threading.Lock()
@@ -58,7 +60,8 @@ class IntegrationTest:
     def run(self, run_time=10):        
         run_start = time.time()
         process = psutil.Process(os.getpid())
-        test_file = open(Test_File, "w")
+
+        test_file = open(self.filename, "w")
 
         test_succesful = True
 
@@ -208,25 +211,26 @@ if __name__ == '__main__':
         'print: print test metrics'
     )
 
-    parser.add_argument('-t', type=int, help="Time to test for in seconds", default=5)
+    parser.add_argument('-t', '--time', type=int, help="Time to test for in seconds", default=5)
 
-    parser.add_argument('-i', help="Time to test for in seconds", default="127.0.0.1")
-    parser.add_argument('-p', type=int, help="Time to test for in seconds", default=7890)
+    parser.add_argument('-i', '--host', help="Host", default="127.0.0.1")
+    parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
+    parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
 
     
     args = parser.parse_args()
 
     if args.mode == "test":
         integration_test = IntegrationTest(patterns=[ShambalaPattern()], host=args.i, port=args.p)
-        integration_test.run(run_time=args.t)
+        integration_test.run(args.test_file, run_time=args.t)
 
     elif args.mode == "plot":
         if not plotting:
             print "Cannot import Matplotlib on this device"
-        plot_results(Test_File)
+        plot_results(args.test_file)
 
     elif args.mode =="print":
-        print_results(Test_File)
+        print_results(args.test_file)
 
     else:
         print parser.print_help()
