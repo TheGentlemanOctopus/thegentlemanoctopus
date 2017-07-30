@@ -225,6 +225,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Check pattern against the default list
     if args.pattern == "all":
         patterns = patternList.patterns
     elif args.pattern in patternList.pattern_dict:
@@ -233,6 +234,7 @@ if __name__ == '__main__':
         print "Unknown pattern", args.pattern
         quit() 
 
+    # Choose your mode
     if args.mode == "test":
         integration_test = IntegrationTest(args.file, patterns=patterns, host=args.host, port=args.port)
         integration_test.run(run_time=args.time)
