@@ -3,6 +3,9 @@ import socket
 import Queue
 import time
 import numpy as np
+import csv
+import argparse
+
 #from collections import deque
 
 def map_val(x, in_min, in_max, out_min, out_max):
@@ -19,10 +22,10 @@ class UDPServer(threading.Thread):
         start_message = "Start",
         buffer_size = 100,
         fft_extent_reset_time = 10,
-        autogainEnable = 1,
+        autogainEnable = 0,
         no_sound_frequency = 0.2,
         ambient_level = 512,
-        no_mic_level = 100
+        no_mic_level = 100,
         ):
 
         print local_ip
@@ -65,27 +68,35 @@ class UDPServer(threading.Thread):
         self.no_sound = True
         self.last_fft_extent_reset = time.time()
 
+
+    def udp_reader(self):
+
+        if self.connected == False:
+            try:
+                self.sock.sendto(self.start_message, (self.arduino_ip, self.start_port))
+                print "sending message:", self.start_message
+            except:
+                self.FFTData = "0,0,0,0,0,0,0"
+
+
+        try:
+            self.FFTData = self.sock.recv(1024) # udp recieve  buffer size is 1024 bytes
+            self.connected = True
+            #print "recieved message:", FFTData
+        except socket.timeout:
+            self.FFTData = "0,0,0,0,0,0,0"
+            self.connected = False
+
+
     def run(self):
 
         while True:
-            if self.connected == False:
-                try:
-                    self.sock.sendto(self.start_message, (self.arduino_ip, self.start_port))
-                    print "sending message:", self.start_message
-                except:
-                    FFTData = "0,0,0,0,0,0,0"
 
+            self.udp_reader()
 
-            try:
-                FFTData = self.sock.recv(1024) # udp recieve  buffer size is 1024 bytes
-                self.connected = True
-                #print "recieved message:", FFTData
-            except socket.timeout:
-                FFTData = "0,0,0,0,0,0,0"
-                self.connected = False
 
             # Parse the data csv style
-            parsedData = FFTData.split(",", self.num_fft_chan)
+            parsedData = self.FFTData.split(",", self.num_fft_chan)
 
             if time.time() - self.last_fft_extent_reset > self.fft_extent_reset_time:
                 self.reset_fft_extents()
@@ -96,14 +107,14 @@ class UDPServer(threading.Thread):
                     # Convert data to integers
                     parsedData[i] = int(parsedData[i])
 
+                    # Reassign the max & min fftnumbers for scaling
+                    if parsedData[i] < self.min_fft:
+                        self.min_fft = parsedData[i]
+
+                    if parsedData[i] > self.max_fft:
+                        self.max_fft = parsedData[i]
+
                     if self.autogainEnable:
-                        # Reassign the max & min fftnumbers for scaling
-                        if parsedData[i] < self.min_fft:
-                            self.min_fft = parsedData[i]
-
-                        if parsedData[i] > self.max_fft:
-                            self.max_fft = parsedData[i]
-
                         if self.min_fft != self.max_fft:
                             scale = self.ambient_level if self.max_fft < self.ambient_level else self.max_fft
                             parsedData[i] = map_val(parsedData[i], self.min_fft, self.max_fft, 0, scale)
@@ -136,11 +147,31 @@ class UDPServer(threading.Thread):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Gimme FFT")
+    parser.add_argument('--file', default=None, help="Where To Save CSV")
+
+    args = parser.parse_args()
+
     dataqueue = Queue.Queue(100)
     server = UDPServer(dataqueue)
     server.start()
 
-    while True:
-        if not dataqueue.empty():
-            data = dataqueue.get()
-            #print data
+    if args.file:
+        
+        with open(args.file, 'wb') as csvfile:
+            datawriter = csv.writer(csvfile, delimiter=',', quotechar='|',quoting=csv.QUOTE_MINIMAL)
+            
+            while True:
+                if not dataqueue.empty():
+                    data = dataqueue.get()
+                    datawriter.writerow(data)
+                    print data
+    else:
+
+        while True:
+            if not dataqueue.empty():
+                data = dataqueue.get()
+                print data
+
+
+
