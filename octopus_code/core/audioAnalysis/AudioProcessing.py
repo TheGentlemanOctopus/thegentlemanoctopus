@@ -63,6 +63,22 @@ class AudioProcessing(threading.Thread):
 
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  
 
-    # bd = BeatDetection(7)
+    d = {}
+    d['BE_Enable'] = 1
+    d['BD_threshold'] = 85
+    d['BD_stretch'] = 18
+    d['AG_Enable'] = 0
+    d['AG_fft_extent_reset_time'] = 30
+
+    qs = [Queue.Queue()]
+
+    ap = AudioProcessing(d,qs)
+
+    ap.start()
+
+    while True:
+        if not qs[0].empty():
+            data = qs[0].get()
+            print 'audio data: ', data
