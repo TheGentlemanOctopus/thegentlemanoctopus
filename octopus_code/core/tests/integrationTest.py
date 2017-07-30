@@ -19,9 +19,11 @@ from core.octopus.patterns.shambalaPattern import ShambalaPattern
 import core.octopus.patterns.patternList as patternList
 
 import core.tests.integrationTestData as integrationTestData
+
 from core.tests.integrationTestData import IntegrationTestData
 
 from utils import Testopus
+
 
 import subprocess
 
