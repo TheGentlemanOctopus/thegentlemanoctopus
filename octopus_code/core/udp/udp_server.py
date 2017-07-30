@@ -148,11 +148,12 @@ class UDPServer(threading.Thread):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Gimme FFT")
-    parser.add_argument('--file', default=None, help="Where To Save CSV")
+    parser.add_argument('f', '--file', default=None, help="Where To Save CSV")
+    parser.add_argument('q', '--queue-size', type=int, default=100, help="Queue size")
 
     args = parser.parse_args()
 
-    dataqueue = Queue.Queue(100)
+    dataqueue = Queue.Queue(args.queue_size)
     server = UDPServer(dataqueue)
     server.start()
 
