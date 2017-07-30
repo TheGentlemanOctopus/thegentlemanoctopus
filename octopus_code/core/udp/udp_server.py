@@ -22,7 +22,7 @@ class UDPServer(threading.Thread):
         start_message = "Start",
         buffer_size = 100,
         fft_extent_reset_time = 10,
-        autogainEnable = 1,
+        autogainEnable = 0,
         no_sound_frequency = 0.2,
         ambient_level = 512,
         no_mic_level = 100,
@@ -107,14 +107,14 @@ class UDPServer(threading.Thread):
                     # Convert data to integers
                     parsedData[i] = int(parsedData[i])
 
+                    # Reassign the max & min fftnumbers for scaling
+                    if parsedData[i] < self.min_fft:
+                        self.min_fft = parsedData[i]
+
+                    if parsedData[i] > self.max_fft:
+                        self.max_fft = parsedData[i]
+
                     if self.autogainEnable:
-                        # Reassign the max & min fftnumbers for scaling
-                        if parsedData[i] < self.min_fft:
-                            self.min_fft = parsedData[i]
-
-                        if parsedData[i] > self.max_fft:
-                            self.max_fft = parsedData[i]
-
                         if self.min_fft != self.max_fft:
                             scale = self.ambient_level if self.max_fft < self.ambient_level else self.max_fft
                             parsedData[i] = map_val(parsedData[i], self.min_fft, self.max_fft, 0, scale)
@@ -127,7 +127,7 @@ class UDPServer(threading.Thread):
                     break
 
 
-            #print parsedData
+            print parsedData
 
             if self.max_fft > self.no_mic_level:
                 self.no_sound = False
