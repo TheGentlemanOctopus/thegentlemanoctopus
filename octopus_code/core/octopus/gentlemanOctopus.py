@@ -3,6 +3,8 @@ import time
 import sys
 import Queue
 import os
+import traceback
+
 
 from core.udp.udp_server import UDPServer
 
@@ -130,6 +132,7 @@ class GentlemanOctopus(Device):
             pixels = [pixel.color for pixel in self.octopus_layout.pixels_zig_zag()]
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
+            print traceback.format_exc()
             raise e
 
         self.client.put_pixels(pixels, channel=1)
