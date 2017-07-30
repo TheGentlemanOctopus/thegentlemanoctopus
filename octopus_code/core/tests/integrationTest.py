@@ -85,7 +85,6 @@ class IntegrationTest:
                 #Update the pattern generator
                 loop_start = time.time()
 
-
                 self.gentleman_octopus.update()
 
                 rate = 1/(time.time() - loop_start)
