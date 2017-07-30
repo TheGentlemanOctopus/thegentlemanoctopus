@@ -32,6 +32,8 @@ class LavaLampPattern2(Pattern):
         g = 255*0.5*(1+np.sin(2*np.pi*self.freq*y + self.t*self.speed_g))
         b = 255*0.5*(1+np.sin(2*np.pi*self.freq*z + self.t*self.speed_b))
 
+        g = g * 0.6 + (r+b) * 0.2
+
         # TODO: black out regions?
         clamp_freq = 1/3.0
         r_clamp = np.cos(x*2*np.pi*clamp_freq + self.t*self.blob_speed + 12)
