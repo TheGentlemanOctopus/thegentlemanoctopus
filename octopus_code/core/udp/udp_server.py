@@ -12,7 +12,6 @@ class UDPServer(threading.Thread):
     """docstring for UDPServer"""
     def __init__(self,
         dataqueue, 
-        ELQueue,
         arduino_ip = '192.168.1.177',
         local_ip = '',
         start_port = 5003,
@@ -52,11 +51,7 @@ class UDPServer(threading.Thread):
         self.connected = False
         self.buffer_size = buffer_size
 
-        self.fft_queue = dataqueue #deque(maxlen = self.buffer_size)
-        self.ELQueue = ELQueue
-#       # Fill the queue with dummy data
-#       for i in range(self.buffer_size):
-#           self.fft_queue.append([0,0,0,0,0,0,0])
+        self.fft_queue = dataqueue
         self.no_sound_frequency = no_sound_frequency
 
         self.reset_fft_extents()
@@ -65,7 +60,7 @@ class UDPServer(threading.Thread):
 
 
     def reset_fft_extents(self):
-        self.min_fft = 0
+        self.min_fft = 1024
         self.max_fft = 0
         self.no_sound = True
         self.last_fft_extent_reset = time.time()
@@ -96,50 +91,49 @@ class UDPServer(threading.Thread):
                 self.reset_fft_extents()
 
             for i in range(len(parsedData)):
+                # Fix for if broken data is recieved
                 if parsedData[i].find(',') < 0:
+                    # Convert data to integers
                     parsedData[i] = int(parsedData[i])
 
-                    if parsedData[i] < self.min_fft:
-                        self.min_fft = parsedData[i]
+                    if self.autogainEnable:
+                        # Reassign the max & min fftnumbers for scaling
+                        if parsedData[i] < self.min_fft:
+                            self.min_fft = parsedData[i]
 
-                    if parsedData[i] > self.max_fft:
-                        self.max_fft = parsedData[i]
+                        if parsedData[i] > self.max_fft:
+                            self.max_fft = parsedData[i]
 
-
-                    if self.min_fft != self.max_fft:
-                        scale = self.ambient_level if self.max_fft < self.ambient_level else self.max_fft
-                        parsedData[i] = map_val(parsedData[i], self.min_fft, self.max_fft, 0, scale)
-                    else:
-                        parsedData = [0,0,0,0,0,0,0]
-                        break
+                        if self.min_fft != self.max_fft:
+                            scale = self.ambient_level if self.max_fft < self.ambient_level else self.max_fft
+                            parsedData[i] = map_val(parsedData[i], self.min_fft, self.max_fft, 0, scale)
+                        else:
+                            parsedData = [0,0,0,0,0,0,0]
+                            break
 
                 else:
                     parsedData = [0,0,0,0,0,0,0]
                     break
 
+
+            print parsedData
+
             if self.max_fft > self.no_mic_level:
                 self.no_sound = False
 
-
+            # does siney outputs if there's no sound.
             if self.no_sound:
                 offsets = np.linspace(0, (12.0/7)*np.pi, 7)
                 levels = 512*(np.cos(2*np.pi*self.no_sound_frequency*time.time() + offsets) + 1)
                 parsedData = levels.tolist()
 
 
-
-
-            #print parsedDatane
+            
             with self.fft_queue.mutex:
                 self.fft_queue.queue.clear()
-            #add to the queu,e
+            #add to the queue
             self.fft_queue.put(parsedData)
 
-            if not self.ELQueue==None:
-                with self.ELQueue.mutex:
-                    self.ELQueue.queue.clear()
-                #add to the queue
-                self.ELQueue.put(parsedData)
 
 if __name__ == '__main__':
     dataqueue = Queue.Queue(100)
