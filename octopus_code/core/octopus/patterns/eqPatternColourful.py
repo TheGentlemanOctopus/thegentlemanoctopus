@@ -23,13 +23,13 @@ class EqPatternColourful(Pattern):
         return (self.meter_r, self.meter_g, self.meter_b)
 
     def dynamic_meter_color(self,level):
-        return (self.meter_g*level, self.meter_g*level, self.meter_b*level)
+        return (self.meter_g*np.cos(np.pi/2*level), self.meter_g*np.cos(np.pi/3*level), self.meter_b*np.cos(np.pi/4*level))
 
     def background_color(self):
         return (self.bg_r, self.bg_g, self.bg_b)
 
     def dynamic_background_color(self,level):
-        return (self.bg_r*(1/level), self.bg_g*(1/level), self.bg_b*(1/level))
+        return (self.bg_r, self.bg_g, self.bg_b)
 
     def next_frame(self, octopus, data):
         #meter_color = self.meter_color()
@@ -47,7 +47,6 @@ class EqPatternColourful(Pattern):
 
                 meter_color = self.dynamic_meter_color(level)
                 background_color = self.dynamic_background_color(level)
-                print background_color
                 pixel_colors = []
 
                 n_meter_pixels = int(len(led_strip.pixels)*float(level))
