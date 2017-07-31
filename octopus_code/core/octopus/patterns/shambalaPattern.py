@@ -18,10 +18,10 @@ import random
 class ShambalaPattern(Pattern):
     def __init__(self):
         self.patterns = [
-            RainbowPlaidEqPattern(),
-            #SpiralOutFast(),
+            #RainbowPlaidEqPattern(),
+            SpiralOutFast(),
             #SpiralInFast(),
-            LavaLampPattern(),
+            #LavaLampPattern(),
             EqPattern()
         ]
 

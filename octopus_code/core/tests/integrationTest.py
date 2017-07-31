@@ -25,6 +25,7 @@ from core.tests.integrationTestData import IntegrationTestData
 
 from utils import Testopus
 
+from core.udp.streamCSV import StreamCSV
 from core.udp.udpServer import UDPServer
 
 
@@ -42,18 +43,17 @@ except Exception as e:
 
 class IntegrationTest:
     def __init__(self,
-        filename, 
+        filename,
         framerate=20, 
         patterns = None,
         host="127.0.0.1",
-        port=7890
+        port=7890,
+        csv_file=None
     ):
     #
         # Setup udp server
         # TODO : port setting, queuesize etc.
         audio_stream_queue = Queue.Queue(100)
-        udp_server = UDPServer(audio_stream_queue)
-        udp_server.start()
 
         # Gentleman Octopus
         self.gentleman_octopus = gentlemanOctopus.GentlemanOctopus(octopusLayout.Import(Testopus), 
@@ -66,6 +66,16 @@ class IntegrationTest:
 
         self.filename = filename
 
+        if csv_file:
+            #Make UDP Server
+            udp_server = UDPServer(audio_stream_queue)
+            udp_server.start()
+
+            #Start the streamer
+            stream_csv = StreamCSV(csv_file)
+            stream_csv.start()
+
+            print "Streaming", csv_file
 
         # Start the cpu meter
         self.cpu_percent = 0
@@ -196,7 +206,6 @@ def plot_results(filename, sample_period):
 
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
@@ -217,9 +226,14 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
     parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
     parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
-    parser.add_argument('--csv-file', default=None, help="csv of fft data to load")
+    parser.add_argument('--csv-file', default=None, help="csv of fft data to loop over during testing")
 
     args = parser.parse_args()
+    
+    # # TODO: This needs to integrate into Ben's work instead of redoing it
+    # stream_csv = StreamCSV(args.csv_file)
+    # stream_csv.start()
+
 
     # Check pattern against the default list
     if args.pattern == "all":
@@ -233,7 +247,12 @@ if __name__ == '__main__':
 
     # Choose your mode
     if args.mode == "test":
-        integration_test = IntegrationTest(args.file, patterns=patterns, host=args.host, port=args.port)
+        integration_test = IntegrationTest(args.file, 
+            patterns=patterns, 
+            host=args.host, 
+            port=args.port, 
+            csv_file=args.csv_file
+        )
         integration_test.run(run_time=args.time)
 
     elif args.mode == "plot":

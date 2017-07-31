@@ -106,7 +106,7 @@ class GentlemanOctopus(Device):
                 self.audio_stream_queue.queue.clear() 
 
             # TODO: Set bit depth somewhere
-            self.pattern_stream_data.set_eq(tuple([eq_level/1024.0 for eq_level in eq]))
+            self.pattern_stream_data.set_eq(tuple([int(eq_level)/1024.0 for eq_level in eq]))
             self.queue_last_receive = time.time()
 
 
