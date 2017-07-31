@@ -9,6 +9,7 @@ from spiralOutFast import SpiralOutFast
 from spiralInFast import SpiralInFast
 from lavaLampPattern import LavaLampPattern
 from lavaLampPattern2 import LavaLampPattern2
+from carousel import Carousel
 
 
 patterns = [
@@ -19,7 +20,8 @@ patterns = [
     LavaLampPattern(),
     RpcTestPattern(),
     RainbowPlaidEqPattern(),
-    LavaLampPattern2()
+    LavaLampPattern2(),
+    Carousel()
 ]
 
 pattern_dict = {}
