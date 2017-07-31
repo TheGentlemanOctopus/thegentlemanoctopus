@@ -6,7 +6,7 @@ import threading
 
 class StreamCSV(threading.Thread):
     ''' stream a commas separated csv file of fft data''' 
-    def __init__(self, filename, host="127.0.0.1", port=5009, framerate=30):
+    def __init__(self, filename, host="127.0.0.1", port=5009, framerate=10):
         self.filename = filename
         self.host = host
         self.port = port
