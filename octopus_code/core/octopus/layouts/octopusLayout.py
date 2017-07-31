@@ -8,7 +8,7 @@ from tentacle import Tentacle
 #TODO: color mappings
 class OctopusLayout:
     ''' An octopus layout represents the morphology and spatial distribution of its chromatophores'''
-    def __init__(self, mantle_radius, tentacle_length, pixels_per_strip):
+    def __init__(self, mantle_radius=0.5, tentacle_length=3, pixels_per_strip=31):
         ''' mantle_radius is the radius of its mantle 
             tentacle_length is the unit length of each tentacle
             each tentacle has two led_strips each with pixels_per_strip chromatophores
@@ -136,7 +136,7 @@ def plot_octopus(octopus_layout):
 
 # Just your everyday octopus :)
 if __name__ == '__main__':
-    octopus = OctopusLayout(0.5, 3, 31)
+    octopus = OctopusLayout()
 
     filepath = 'octopusLayout.json'
     octopus.export(filepath)
