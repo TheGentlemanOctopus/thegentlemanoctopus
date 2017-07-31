@@ -10,6 +10,14 @@ class Carousel(Pattern):
 
         self.t = time.time()
 
+        self.register_param("freq", 0, 1, 0.2)
+        self.register_param("speed_r", 0, 10, 2)
+        self.register_param("speed_g", 0, 10, 1)
+        self.register_param("speed_b", 0, 10, 1.5)
+        self.register_param("blob_speed", 0, 10, 1)
+
+        self.register_param("time_warp", 0, 10, 1)
+
     # Reset Time
     def on_pattern_select(self, octopus):
         self.t = time.time()
@@ -30,12 +38,27 @@ class Carousel(Pattern):
             g = int(np.abs((1.0/3)*255*pixel.location[1]))
             b = 20
 
+            dtheta = dt*self.speed*np.sin(pixel.radius() + 2*np.pi*np.sin(time.time()))
 
-            pixel.rotate(dt*self.speed*np.sin(pixel.radius()))
+            pixel.rotate(dtheta)
 
             pixel.color = (r,g,b)
 
-        
+        # Pull out x,y,z
+        pixels = octopus.pixels()
+        x = np.array([pixel.location[0] for pixel in pixels])
+        y = np.array([pixel.location[1] for pixel in pixels])
+        z = np.array([pixel.location[2] for pixel in pixels])
+
+        # Sine Time
+        r = 255*0.5*(1+np.sin(2*np.pi*self.freq*x + self.t*self.speed_r))
+        g = 255*0.5*(1+np.sin(2*np.pi*self.freq*y + self.t*self.speed_g))
+        b = 255*0.5*(1+np.sin(2*np.pi*self.freq*z + self.t*self.speed_b))
+
+        g = g * 0.6 + (r+b) * 0.2
+
+        for i in range(len(pixels)):
+            pixels[i].color = (int(r[i]), int(b[i]), int(g[i]))  
 
 
 
