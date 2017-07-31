@@ -221,8 +221,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-t', '--time', default=5, type=int, help="Time to test for in seconds")
 
-    parser.add_argument('-i', '--host', help="Host", default="127.0.0.1")
-    parser.add_argument('-p', '--port', type=int, help="Port", default=7890)
+    parser.add_argument('-i', '--host', help="Opc Host", default="127.0.0.1")
+    parser.add_argument('-p', '--port', type=int, help="Opc Port", default=7890)
     parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
     parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
     parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
