@@ -83,6 +83,9 @@ class GentlemanOctopus(Device):
         self.kb = kbHit.KBHit()    
 
 
+    # def run(self):
+    #     self.update()
+
     #Returns None if we should quit
     def update(self):
         # Handle Keyboard Input

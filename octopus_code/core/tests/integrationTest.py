@@ -25,7 +25,7 @@ from core.tests.integrationTestData import IntegrationTestData
 
 from utils import Testopus
 
-from core.udp.streamCSV import StreamCSV
+from core.udp.streamCsv import StreamCSV
 from core.udp.udpServer import UDPServer
 
 

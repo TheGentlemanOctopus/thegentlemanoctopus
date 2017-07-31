@@ -20,7 +20,7 @@ class SerialThread(threading.Thread):
 
     ## Constructor for serial thread, does very little just defines the class.  
     #
-    def __init__(self, dataQueue, sim=False, port="/dev/ttyUSB0", baud="57600", name='SerialThread'):
+    def __init__(self, dataQueue, sim=False, port="/dev/ttyUSB0", baud="57600", name="SerialThread", threshold=45, stretch=12):
         # threading.Thread.__init__(self)
         print "Init serial thread"
         self.port = port
@@ -31,6 +31,7 @@ class SerialThread(threading.Thread):
         self.process = None
         self.daemon = True
 
+
     '''
     Run is called by parent class start()
     '''
@@ -39,22 +40,28 @@ class SerialThread(threading.Thread):
         print "Thread: %s starts" % (self.getName( ),)
 
         self.connect(self.port,self.baud)
-        cmd = [ "bash", 'process.sh']
+
+        data = ['a','b','c','d','e','f','g']
+
         while self.connection == True:
+
             if not self.dataQueue.empty():
                 msg = self.dataQueue.get()
-                print "size of queue", self.dataQueue.qsize()
-                
-                if not self.sim:
-                    self.ser.flushOutput()
-                    self.ser.write(msg)
-                else:
-                    print 'data:', msg
-                
+
+                self.ser.flushOutput()
+                for i in xrange(len(msg)):
+                    # if beats[i]:
+                    #     data[i] = chr(65+i)
+                    # else:
+                    #     data[i] = chr(97+i)
+                    if beats[i]:
+                        c = chr(97+i)
+                        self.ser.write(c)
+
                 time.sleep(1.0/10000.0);
 
             if self.sim:
-                print "Tick tick"
+                # print "Tick tick"
                 time.sleep(5)
 
         print "exiting serial thread"
