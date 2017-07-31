@@ -29,15 +29,16 @@ class StreamCsv:
 if __name__ == '__main__':
     # Argin the parsin
     parser = argparse.ArgumentParser(description="Stream the FFT")
-    parser.add_argument('--host', default='192.168.1.177', help="Host")
+    parser.add_argument('--host', default='127.0.0.1', help="Host")
     #5009?
-    parser.add_argument('--port', type=int, default=5003, help="Port")
+    parser.add_argument('--port', type=int, default=5009, help="Port")
     parser.add_argument('--framerate', type=int, default=30, help="Framerate")
     parser.add_argument('--file', help="path to csv")
 
     args = parser.parse_args()
 
     # Stream it up!
+    print "Streaming", args.file, "to", args.host + ":" + str(args.port)
     stream_csv = StreamCsv(args.file, args.host, args.port, args.framerate)
     stream_csv.stream()
 

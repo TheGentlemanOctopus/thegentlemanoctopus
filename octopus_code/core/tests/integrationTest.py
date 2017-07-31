@@ -217,6 +217,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--file', default="./core/tests/test_data.csv", help='test file csv')
     parser.add_argument('-s', '--sample-period', default=0, type=float, help="Period when loading data from csv")
     parser.add_argument('--pattern', default="all", help="Choose a pattern by name")
+    parser.add_argument('--csv-file', default=None, help="csv of fft data to load")
 
     args = parser.parse_args()
 

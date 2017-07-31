@@ -68,13 +68,11 @@ class UDPServer(threading.Thread):
 
 
     def udp_reader(self):
-
-        if self.connected == False:
+        if not self.connected:
             try:
                 self.sock.sendto(self.start_message, (self.arduino_ip, self.start_port))
             except:
                 self.FFTData = "0,0,0,0,0,0,0"
-
 
         try:
             self.FFTData = self.sock.recv(1024) # udp recieve  buffer size is 1024 bytes
@@ -88,6 +86,7 @@ class UDPServer(threading.Thread):
     def run(self):
 
         while True:
+
             self.udp_reader()
 
             # Parse the data csv style
@@ -137,6 +136,7 @@ class UDPServer(threading.Thread):
                 self.fft_queue.queue.clear()
             #add to the queue
             self.fft_queue.put(parsedData)
+
 
 
 if __name__ == '__main__':
