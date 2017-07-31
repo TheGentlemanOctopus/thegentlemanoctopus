@@ -1,43 +1,15 @@
-# test
-
-# from core import soundreaction
-# from core.Serial.SerialThread import serial
-from core.Serial.SerialThreadDB import SerialThreadBD
-from core.octopus.patternGenerator import PatternGenerator
-
-
-from core.udp.udp_server import UDPServer
-
-from core.octopus.patterns.shambalaPattern import ShambalaPattern
-
-from core.octopus.patterns.simplePattern import SimplePattern
-from core.octopus.patterns.rpcTestPa# from core import soundreaction
-# from core.Serial.SerialThread import serial
-from core.Serial.SerialThreadDB import SerialThreadBD
-from core.octopus.patternGenerator import PatternGenerator
-from core.udp.udp_server import UDPServer
-from core.octopus.rpcServer import RpcServer
+#!/usr/bin/env python
 
 ''' for Bens new changes '''
-from core.xmlrpc.xmlrpcThread import RpcServerThread
+# from core.xmlrpc.xmlrpcThread import RpcServerThread
 
 ''' Patterns import '''
-from core.octopus.patterns.shambalaPattern import ShambalaPattern
-from core.octopus.patterns.simplePattern import SimplePattern
-from core.octopus.patterns.rpcTestPattern import RpcTestPattern
-from core.octopus.patterns.eqPattern import EqPattern
-from core.octopus.patterns.rainbowPlaidPattern import RainbowPlaidPattern
-from core.octopus.patterns.rainbowPlaidEqPattern import RainbowPlaidEqPattern
-#from patterns.solidColorPattern import SolidColorPattern, SpiralOut, PulseOut, IntegrateF, GridPattern, HelicopterEq
-from core.octopus.patterns.spiralOutFast import SpiralOutFast
-from core.octopus.patterns.lavaLampPattern import LavaLampPattern
 
-import core.octopus.layouts.octopus as octopus
-import core.octopus.kbHit
-
+# import core.octopus.layouts.octopus as octopus
+from core.scene.octopusScene import OctopusScene
 
 ''' beat detection class ''' 
-from core.audioAnalysis.beatDetection import BeatDetection
+from core.audioAnalysis.BeatDetection import BeatDetection
 
 ''' standard imports '''
 import numpy as np
@@ -70,20 +42,34 @@ def checkInDictEquals(dic, key, value):
 	''' 
 	method to check for key existance in dictionary with value
 	'''
+	# print 'checkInDictEquals', key, value
 	try:
 		if key in dic:
+			# print 'check- ', dic[key]
 			return dic[key] == value
 	except KeyError:
+		# print 'FALSE'
 		return False
+
+def print_config(conf):
+	''' 
+	method to print the configuration file parameters
+	'''
+	print '\nConfiguration file loaded....\n'
+	''' sections '''
+	for section in conf:
+		print '\n____[', section, ']____'
+		for item in conf[section]:
+			print item, ':', conf[section][item]
 
 
 if __name__ == '__main__':
 
-
 	parser = argparse.ArgumentParser()
-	
-	parser.add_argument("-l", "--layout", help="layout file eg. octopus.json", action="store_true")
-	parser.add_argument("-c", "--config", help="config file eg. tgo.ini", action="store_true")
+
+	parser.add_argument("-l", "--layout", type=str, help="layout file eg. octopus.json")
+	parser.add_argument("-c", "--config", type=str, help="config file eg. tgo.ini")
+	parser.add_argument("-t", "--timeout", type=int, help="timeout, forever if 0")
 
 	args = parser.parse_args()
 
@@ -95,6 +81,10 @@ if __name__ == '__main__':
 		f_config = args.config
 	else:
 		f_config = 'tgo.ini'
+	if args.timeout:
+		timeout = args.timeout
+	else:
+		timeout = 0
 	
 
 	''' read config file '''
@@ -106,39 +96,50 @@ if __name__ == '__main__':
 		sections = Config.sections()
 		print Config.sections()
 		for s in Config.sections():
-			print s#, Config.items(s)
+			# print s#, Config.items(s)
 			conf[s]={}
 
 			for i in Config.items(s):
 				conf[s][i[0]] = str_to_type(i[1])
-				print i
+				# print i
 	print_config(conf)
 
 
 	''' init queues '''
-	controlQueue = Queue.Queue(100)
+	rpcQueue = Queue.Queue(100)
 
 	'''
 	START RPC INTERFACE
 	'''
-	if checkInDictEquals(conf_control,'RPC',1): 
-		rpc_ip = conf_routing['RPC_Server_ip']
-		rpc_port = conf_routing['RPC_Server_port']
-
+	if checkInDictEquals(conf['Control'],'RPC',1): 
+		rpc_ip = conf['Routing']['RPC_Server_ip']
+		rpc_port = conf['Routing']['RPC_Server_port']
 		try:
 			rpc_server = RpcServerThread(
-							dataQueue=controlQueue,
-							host=rpc_ip,
-							port=rpc_port
-						)
+				dataQueue=rpcQueue,
+				host=rpc_ip,
+				port=rpc_port
+				)
 			rpc_server.daemon = True
 			rpc_server.start()
 		except Exception, e:
 			print "Error initiation RpcServerThread", e
 			exit()	
 
+	'''
+	START SCENE
+	'''
+	if checkInDictEquals(conf['Control'],'OctopusScene',1): 
+		try:
+			print 'starting octopusScene'
 
+			scene = OctopusScene(conf, f_layout, rpcQueue)
+			scene.main_loop(timeout)
+		except Exception, e:
+			print "Error initiation OctopusScene", e
+			exit()	
 
+	print 'Goodbye!'
 
 
 	
