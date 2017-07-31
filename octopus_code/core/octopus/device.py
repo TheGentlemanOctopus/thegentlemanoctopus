@@ -1,5 +1,5 @@
 import threading 
-from Queue import Queue
+import Queue
 import time
 
 # TODO: is there anything outside of the constructor that will actually be shared?
@@ -9,19 +9,19 @@ class Device(threading.Thread):
     '''
     def __init__(self, control_queue=None, audio_stream_queue=None):
         ''' inputs should be queues '''
-        threading.Thread.__init__(self,name=name)
+        threading.Thread.__init__(self)
         self.process = None
         self.daemon = True
 
         # Initialise queues
         if not control_queue:
-            control_queue = Queue(1)
+            control_queue = Queue.Queue(1)
 
         self.control_queue = control_queue
 
         # Initialise queues
         if not audio_stream_queue:
-            audio_stream_queue = Queue(1)
+            audio_stream_queue = Queue.Queue(1)
 
         self.audio_stream_queue = audio_stream_queue
 

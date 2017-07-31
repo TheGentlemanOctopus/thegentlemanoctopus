@@ -2,6 +2,7 @@
 
 from core.audioAnalysis.AudioProcessing import AudioProcessing
 from core.fish.fish import Fish
+from core.scene.controlInterface import ControlInterface
 from core.octopus.gentlemanOctopus import GentlemanOctopus
 import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.patterns.patternList as patternList
@@ -24,14 +25,16 @@ class OctopusScene():
     * Audio processing (UDP Server)
     '''
     
-    def __init__(self, config, layout, controlQueue):
+    def __init__(self, cfg, layout, controlQueue):
         ''' config - dictionary '''
-        self.config = config
+        self.conf = cfg
+
         self.process_config()
+
         self.layout_f = layout
 
         ''' init control queues '''
-        self.ifQueue = controlQueue(100)
+        self.ifQueue = controlQueue
         self.fish_ctrl = Queue.Queue(100)
         self.octopus_ctrl = Queue.Queue(100)
         self.audio_ctrl = Queue.Queue(100)
@@ -42,23 +45,49 @@ class OctopusScene():
 
         ''' init devices '''
         self.init_audio_processing(self.conf_audio, self.fft_queues, self.audio_ctrl)
-        self.init_fish(self.fish_ctrl,fft_queues[0])
-        self.init_octopus(self.octopus_ctrl,fft_queues[1])
+        print 'f1sh'
+        self.init_fish(self.conf_fish,self.fish_ctrl,self.fft_queues[0])
+        print 'octopus'
+        self.init_octopus(self.octopus_ctrl,self.fft_queues[1])
         
         # init control interface
+        # run main loop in ControlInterface.py
 
 
         pass
 
-    def process_config(self):
-        ''' declare specific dictionaries '''
-        self.conf_routing = conf['Routing']
-        self.conf_fish = conf['Fish']
-        self.conf_control = conf['Control']
-        self.conf_audio = conf['BeatDetection']   
-        self.conf_pattern_gen = conf['PatternGenerator'] 
-        self.conf_patterns = conf['Patterns']
 
+    def main_loop(self,  run_time=10):
+        ''' pole rpc queue for new commands and distrubute to scene 
+        devices as needed '''
+        run_start = time.time()
+        while time.time() - run_start < run_time:
+            status_string = (
+                "Testing ", self.gentleman_octopus.current_pattern.__class__.__name__, ": ", 
+                int(time.time() - run_start), "s",
+                " of ", 
+                str(run_time), "s"
+            )
+            status_string = "".join([str(x) for x in status_string])
+            print '\r', status_string,
+            sys.stdout.flush()
+                
+            loop_start = time.time()
+            self.gentleman_octopus.update()
+            rate = 1/(time.time() - loop_start)
+            t = loop_start - run_start
+        pass
+
+    def process_config(self):
+
+        ''' declare specific dictionaries '''
+        self.conf_routing = self.conf['Routing']
+        self.conf_fish = self.conf['Fish']
+        self.conf_control = self.conf['Control']
+        self.conf_audio = self.conf['Audio']   
+        self.conf_pattern_gen = self.conf['PatternGenerator'] 
+        self.conf_patterns = self.conf['Patterns']
+        
     def print_config(self, conf):
         ''' 
         method to print the configuration file parameters
@@ -71,6 +100,7 @@ class OctopusScene():
                 print item, ':', conf[section][item]
 
     def init_audio_processing(self, conf, fft_q, ctrl_q):
+        print 'Audio'
         self.audio = AudioProcessing(
             conf,
             fft_q, 
@@ -83,7 +113,7 @@ class OctopusScene():
     def init_fish(self, conf, fft_q, ctrl_q):
         self.fish = Fish(
             conf, 
-            controlQueue=ctrl_q, 
+            control_queue=ctrl_q, 
             audio_stream_queue=fft_q
             )
         self.fish.start()
@@ -94,7 +124,7 @@ class OctopusScene():
         self.gentleman_octopus = GentlemanOctopus(
             octopus_layout, 
             control_queue=ctrl_q,
-            audio_stream_queue=audio_q,
+            audio_stream_queue=fft_q,
             opc_host=self.conf_routing['OPC_ip'], 
             opc_port=self.conf_routing['OPC_port'],
             patterns=patternList.patterns
@@ -105,64 +135,6 @@ class OctopusScene():
     def init_control(self, fft_q, ctrl_q):
         print 'init control not implimented'
 
-
-    def init_beat_detection(self, beat, el):
-        '''
-        START BEAT DETECTION THREAD
-        '''
-        if checkInDictEquals(beat,'Enable',1): 
-            try: 
-                if conf_EL['sim']: 
-                    sim = True
-                else: 
-                    sim = False
-                self.thr = SerialThreadBD(
-                    ELQueue,
-                    sim=sim,
-                    port=el['port'], 
-                    baud=el['baud'], 
-                    threshold=beat['threshold'], 
-                    stretch=beat['stretch']
-                    )
-                self.thr.start()
-                print "Serial connected OK!"
-            except Exception, e:
-                print "SerialThreadBD: Error connecting to serial", e
-                exit()
-
-    
-    def init_pattern_generator(self, routing, patternG, patterns):
-        ''' 
-        START PATTERN GENERATOR
-        '''
-        if checkInDictEquals(patternG,'Enable',1): 
-            try: 
-                self.pattern_generator = PatternGenerator(
-                    octopus.ImportOctopus(f_layout), 
-                    fftQueue, 
-                    opc_host=routing['OPC_ip'], 
-                    opc_port=routing['OPC_port'], 
-                    rhythm_channel=patternG['rhythm_channel'],
-                    framerate=patternG['framerate']
-                    )
-            except Exception, e:
-                print "Error connecting to UDP", e
-                exit()
-
-        ''' register patterns for generator '''
-        patterns_list = []
-        if checkInDictEquals(patterns,'ShambalaPattern',1):
-            patterns_list.append(ShambalaPattern())
-        if checkInDictEquals(patterns,'SpiralOutFast',1):
-            patterns_list.append(SpiralOutFast())
-        if checkInDictEquals(patterns,'LavaLampPattern',1):
-            patterns_list.append(LavaLampPattern())
-        if checkInDictEquals(patterns,'EqPattern',1):
-            patterns_list.append(EqPattern())
-        if checkInDictEquals(patterns,'RainbowPlaidEqPattern',1):
-            patterns_list.append(RainbowPlaidEqPattern())
-        self.pattern_generator.patterns = patterns_list
-        print patterns_list
 
 # Example
 if __name__ == '__main__':

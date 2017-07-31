@@ -1,4 +1,4 @@
-from Queue import Queue
+import Queue
 import time
 from core.octopus.device import Device
 from core.Serial.SerialThread import SerialThread
@@ -12,10 +12,12 @@ class Fish(Device):
         self.audio_q = audio_stream_queue
         Device.__init__(self, control_queue=self.ctrl_q, audio_stream_queue=self.audio_q)
         
+
         dataQueue = Queue.Queue(1000)
 
         self.serialTh = SerialThread(
-            dataQueue,sim=conf['sim'],
+            dataQueue,
+            sim=conf['sim'],
             port=conf['port'], 
             baud=conf['baud'], 
             name='FishThread'
@@ -26,6 +28,7 @@ class Fish(Device):
 
     # TODO: Make this non-blocking
     def run(self):
+        print 'fsh run'
         ''' check audio queue '''
         if not self.audio_q.empty():
             ''' take latest element '''

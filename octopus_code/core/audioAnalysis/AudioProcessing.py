@@ -21,10 +21,10 @@ class AudioProcessing(threading.Thread):
         args: dictionary from config file for audio
         queues: list of queues to receive audio data
         '''
+        threading.Thread.__init__(self)
         self.daemon = True
         self._running_flag = False
-        self.stop  = threading.Event()
-        threading.Thread.__init__(self)
+        self.stop = threading.Event()
 
         self.channels = args['FFT_channels']
         self.queues = op_queues
@@ -32,18 +32,20 @@ class AudioProcessing(threading.Thread):
         self.sim = args['sim']
         ''' create fft '''
         self.dataqueue = Queue.Queue(100)
-        self.server = UDPServer(
-            dataqueue,
-            arduino_ip = args['Arduino_ip']
-            start_port = args['UDP_start_port'],
-            data_port = args['UDP_data_port'],
-            fft_extent_reset_time = args['AG_fft_extent_reset_time'],
-            autogainEnable = args['AG_Enable'],
-            )
-        self.server.start()
+        
+        if not self.sim:
+            self.server = UDPServer(
+                self.dataqueue,
+                arduino_ip = args['Arduino_ip'],    
+                start_port = args['UDP_start_port'],
+                data_port = args['UDP_data_port'],
+                fft_extent_reset_time = args['AG_fft_extent_reset_time'],
+                autogainEnable = args['AG_Enable'],
+                )
+            self.server.start()
         
         ''' create BeatDetection '''
-        self.bd = BeatDetection(7, args['BD_threshold'], args['BD_stretch']))
+        self.bd = BeatDetection(7, args['BD_threshold'], args['BD_stretch'])
 
 
     def terminate(self):
@@ -56,8 +58,9 @@ class AudioProcessing(threading.Thread):
             while(not self.stop.wait(0.01)):
                 ''' simulated '''
                 if self.sim:
+                    # print 'simulate'
                     self.simulate()
-                ''' real '''                
+                    ''' real '''                
                 elif not self.dataqueue.empty():
                     fft_data = self.dataqueue.queue[-1]
                     with self.dataqueue.mutex:

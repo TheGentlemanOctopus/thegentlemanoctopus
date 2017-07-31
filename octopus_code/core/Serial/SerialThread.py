@@ -14,9 +14,8 @@ import time
 import serial
 import binascii
 
-from core.audioAnalysis.beatDetection import BeatDetection
 
-class SerialThreadBD(threading.Thread):
+class SerialThread(threading.Thread):
     """docstring for SerialThread - Has 1 thread to read data queue and send it out via serial (wip)"""
 
     ## Constructor for serial thread, does very little just defines the class.  
@@ -62,7 +61,7 @@ class SerialThreadBD(threading.Thread):
                 time.sleep(1.0/10000.0);
 
             if self.sim:
-                print "Tick tick"
+                # print "Tick tick"
                 time.sleep(5)
 
         print "exiting serial thread"
