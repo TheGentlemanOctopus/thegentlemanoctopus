@@ -6,7 +6,7 @@ import os
 import traceback
 
 
-from core.udp.udp_server import UDPServer
+from core.udp.udpServer import UDPServer
 
 import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.kbHit as kbHit
@@ -80,7 +80,8 @@ class GentlemanOctopus(Device):
         self.set_default_pattern()
         
         #For detecting keyboard presses
-        self.kb = kbHit.KBHit()    
+        if self.enable_status_monitor:
+            self.kb = kbHit.KBHit()    
 
 
     # def run(self):
@@ -88,25 +89,26 @@ class GentlemanOctopus(Device):
 
     #Returns None if we should quit
     def update(self):
+
         # Handle Keyboard Input
-        if self.kb.kbhit():
-            key = self.kb.getch()
-            if key == 'q':
-                return None
-            elif key == 'w':
-                pattern_index = self.previous_pattern()
-            elif key =='s':
-                pattern_index = self.next_pattern()
-            elif self.nudge_param(key):
-                if self.enable_status_monitor:
-                    self.print_status()
+        if self.enable_status_monitor:
+            if self.kb.kbhit():
+                key = self.kb.getch()
+                if key == 'q':
+                    return None
+                elif key == 'w':
+                    pattern_index = self.previous_pattern()
+                elif key =='s':
+                    pattern_index = self.next_pattern()
+                elif self.nudge_param(key):
+                        self.print_status()
 
         # Read from data queue
         if not self.audio_stream_queue.empty():
             # Keep it clean and clear
             with self.audio_stream_queue.mutex:
-                eq = self.audio_stream_queue.queue[-1]
-                self.audio_stream_queue.queue.clear() 
+                raw_data = self.audio_stream_queue.queue[-1]
+                eq = raw_data[:7]
 
             # TODO: Set bit depth somewhere
             self.pattern_stream_data.set_eq(tuple([int(eq_level)/1024.0 for eq_level in eq]))
@@ -127,7 +129,9 @@ class GentlemanOctopus(Device):
             print traceback.format_exc()
             raise e
 
+
         self.client.put_pixels(pixels, channel=1)
+
 
     # TODO: Delete this silly function?
     def set_default_pattern(self):

@@ -4,8 +4,8 @@ import Queue
 import time
 import random
 
-from core.audioAnalysis.BeatDetection import BeatDetection
-from core.udp.udp_server import UDPServer
+from core.audioAnalysis.beatDetection import BeatDetection
+from core.udp.udpServer import UDPServer
 
 
 '''
@@ -28,6 +28,7 @@ class AudioProcessing(threading.Thread):
 
         self.channels = args['FFT_channels']
         self.queues = op_queues
+
         self.ctrl = ctrl_queue
         self.sim = args['sim']
         ''' create fft '''
@@ -62,12 +63,14 @@ class AudioProcessing(threading.Thread):
                     self.simulate()
                     ''' real '''                
                 elif not self.dataqueue.empty():
+
                     fft_data = self.dataqueue.queue[-1]
                     with self.dataqueue.mutex:
                         self.dataqueue.queue.clear()
 
                     ''' if queue available then pass to BD '''
                     beat_data = self.bd.detectBeat(fft_data)
+
 
                     ''' then pass through each queue in list '''
                     for q in self.queues:

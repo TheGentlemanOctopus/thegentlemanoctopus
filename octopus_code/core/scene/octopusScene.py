@@ -48,7 +48,7 @@ class OctopusScene():
         print 'f1sh'
         self.init_fish(self.conf_fish,self.fish_ctrl,self.fft_queues[0])
         print 'octopus'
-        self.init_octopus(self.octopus_ctrl,self.fft_queues[1])
+        self.init_octopus(self.fft_queues[1], self.octopus_ctrl)
         
         # init control interface
         # run main loop in ControlInterface.py
@@ -60,23 +60,7 @@ class OctopusScene():
     def main_loop(self,  run_time=10):
         ''' pole rpc queue for new commands and distrubute to scene 
         devices as needed '''
-        run_start = time.time()
-        while time.time() - run_start < run_time:
-            status_string = (
-                "Testing ", self.gentleman_octopus.current_pattern.__class__.__name__, ": ", 
-                int(time.time() - run_start), "s",
-                " of ", 
-                str(run_time), "s"
-            )
-            status_string = "".join([str(x) for x in status_string])
-            print '\r', status_string,
-            sys.stdout.flush()
-                
-            loop_start = time.time()
-            self.gentleman_octopus.update()
-            rate = 1/(time.time() - loop_start)
-            t = loop_start - run_start
-        pass
+        self.gentleman_octopus.run()
 
     def process_config(self):
 

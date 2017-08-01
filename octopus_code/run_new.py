@@ -9,7 +9,7 @@
 from core.scene.octopusScene import OctopusScene
 
 ''' beat detection class ''' 
-from core.audioAnalysis.BeatDetection import BeatDetection
+from core.audioAnalysis.beatDetection import BeatDetection
 
 ''' standard imports '''
 import numpy as np
