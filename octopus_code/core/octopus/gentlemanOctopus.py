@@ -127,7 +127,9 @@ class GentlemanOctopus(Device):
             print traceback.format_exc()
             raise e
 
+
         self.client.put_pixels(pixels, channel=1)
+
 
     # TODO: Delete this silly function?
     def set_default_pattern(self):
