@@ -121,15 +121,14 @@ class GentlemanOctopus(Device):
         # Send some pixels
         try:
             self.current_pattern.next_frame(self.octopus_layout, self.pattern_stream_data)
+            pixels = [pixel.color for pixel in self.octopus_layout.pixels_zig_zag()]
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             print traceback.format_exc()
             raise e
 
 
-        for i in range(len(self.octopus_layout.tentacles)):
-            pixels = [pixel.color for pixel in self.octopus_layout.tentacles[i].pixels_zig_zag()]
-            self.client.put_pixels(pixels, channel=i)
+        self.client.put_pixels(pixels, channel=1)
 
 
     # TODO: Delete this silly function?
