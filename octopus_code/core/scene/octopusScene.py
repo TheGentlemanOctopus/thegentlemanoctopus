@@ -48,7 +48,7 @@ class OctopusScene():
         print 'f1sh'
         self.init_fish(self.conf_fish,self.fish_ctrl,self.fft_queues[0])
         print 'octopus'
-        self.init_octopus(self.octopus_ctrl,self.fft_queues[1])
+        self.init_octopus(self.fft_queues[1], self.octopus_ctrl)
         
         # init control interface
         # run main loop in ControlInterface.py
