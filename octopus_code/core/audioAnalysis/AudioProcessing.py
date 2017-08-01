@@ -4,8 +4,8 @@ import Queue
 import time
 import random
 
-from core.audioAnalysis.BeatDetection import BeatDetection
-from core.udp.udp_server import UDPServer
+from core.audioAnalysis.beatDetection import BeatDetection
+from core.udp.udpServer import UDPServer
 
 
 '''

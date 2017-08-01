@@ -58,5 +58,4 @@ class SpiralOutFast(Pattern):
         b = np.interp(domain_b, self.t, self.b)
 
         for i in range(len(self.pixels)):
-            del self.pixels[i].color
             self.pixels[i].color = (r[i], g[i], b[i])

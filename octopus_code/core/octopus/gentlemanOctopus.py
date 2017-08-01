@@ -6,7 +6,7 @@ import os
 import traceback
 
 
-from core.udp.udp_server import UDPServer
+from core.udp.udpServer import UDPServer
 
 import core.octopus.layouts.octopusLayout as octopusLayout
 import core.octopus.kbHit as kbHit
