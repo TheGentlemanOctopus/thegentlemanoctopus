@@ -3,7 +3,6 @@ from pattern import Pattern
 import time
 import numpy as np
 
-import matplotlib.pyplot as plt
 
 class LavaLampPattern2(Pattern):
     def __init__(self):
