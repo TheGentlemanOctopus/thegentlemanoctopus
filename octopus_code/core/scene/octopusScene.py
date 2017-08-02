@@ -96,7 +96,7 @@ class OctopusScene():
         pass
 
 
-    def init_fish(self, conf, audio_q=fft_q, ctrl=ctrl_q):
+    def init_fish(self, conf, audio_q=None, ctrl=None):
         self.fish = Fish(
             conf, 
             control_queue=ctrl, 
