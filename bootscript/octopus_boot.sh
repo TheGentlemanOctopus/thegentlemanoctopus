@@ -1,5 +1,6 @@
 #!/bin/bash
 
-echo 'test boot' >> /home/odroid/boottestcron.txt
+#echo 'boot script test' >> /home/odroid/boottestcron.txt
+cd ../octopus_code
 
-
+python run.py --config tgo_hw.ini --layout core/octopus/layouts/octopusLayout.json --timeout 10 
