@@ -80,7 +80,7 @@ class SerialThread(threading.Thread):
         self.baud = baud
         self.connection = False
 
-        print 'serial sim:', self.sim
+        print 'serial sim:', type(self.sim), self.sim
         if not self.sim:
             print 'Connect to serial port '
 
