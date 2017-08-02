@@ -43,6 +43,8 @@ class OctopusScene():
         self.ELQueue = Queue.Queue(100)
         self.fft_queues = [Queue.Queue(100),Queue.Queue(100)]
 
+
+
         ''' init devices '''
         self.init_audio_processing(self.conf_audio, self.fft_queues, self.audio_ctrl)
         print 'f1sh'
@@ -104,6 +106,13 @@ class OctopusScene():
 
 
     def init_octopus(self, fft_q, ctrl_q):
+        # Default to false
+        #TODO: there should be a better way to guarantee the structure of conf
+        if "StatusMonitor" in self.conf_pattern_gen:
+            enable_status_monitor = self.conf_pattern_gen["StatusMonitor"]
+        else:
+            enable_status_monitor = False
+
         octopus_layout = octopusLayout.Import(self.layout_f)
         self.gentleman_octopus = GentlemanOctopus(
             octopus_layout, 
@@ -111,7 +120,8 @@ class OctopusScene():
             audio_stream_queue=fft_q,
             opc_host=self.conf_routing['OPC_ip'], 
             opc_port=self.conf_routing['OPC_port'],
-            patterns=patternList.patterns
+            patterns=patternList.patterns,
+            enable_status_monitor=enable_status_monitor
         )
         self.gentleman_octopus.start()
 
