@@ -48,7 +48,7 @@ class OctopusScene():
         ''' init devices '''
         self.init_audio_processing(self.conf_audio, self.fft_queues, self.audio_ctrl)
         print 'f1sh'
-        self.init_fish(self.conf_fish,self.fish_ctrl,self.fft_queues[0])
+        self.init_fish(self.conf_fish,audio_q=self.fft_queues[0],ctrl=self.fish_ctrl,)
         print 'octopus'
         self.init_octopus(self.fft_queues[1], self.octopus_ctrl)
         
@@ -96,11 +96,11 @@ class OctopusScene():
         pass
 
 
-    def init_fish(self, conf, fft_q, ctrl_q):
+    def init_fish(self, conf, audio_q=None, ctrl=None):
         self.fish = Fish(
             conf, 
-            control_queue=ctrl_q, 
-            audio_stream_queue=fft_q
+            control_queue=ctrl, 
+            audio_stream_queue=audio_q
             )
         self.fish.start()
 

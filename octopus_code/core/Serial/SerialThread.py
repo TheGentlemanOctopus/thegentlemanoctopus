@@ -47,16 +47,16 @@ class SerialThread(threading.Thread):
 
             if not self.dataQueue.empty():
                 msg = self.dataQueue.get()
-
+                # print msg
                 self.ser.flushOutput()
                 for i in xrange(len(msg)):
                     # if beats[i]:
                     #     data[i] = chr(65+i)
                     # else:
                     #     data[i] = chr(97+i)
-                    if beats[i]:
+                    if msg[i]:
                         c = chr(97+i)
-                        print c                        
+                        # print 'serial thread beat', c , i                       
                         self.ser.write(c)
 
                 time.sleep(1.0/10000.0);
@@ -80,8 +80,9 @@ class SerialThread(threading.Thread):
         self.baud = baud
         self.connection = False
 
+        print 'serial sim:', type(self.sim), self.sim
         if not self.sim:
-            ''' Connect to serial port '''
+            print 'Connect to serial port '
 
             try:
                 self.ser = serial.Serial(port = self.port, baudrate = self.baud) 

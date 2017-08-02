@@ -5,10 +5,11 @@ BeatDetection class is used to track beats over time
 '''
 class BeatDetection():
 
-    def __init__(self, channels, threshold=17, stretch=6):
+    def __init__(self, channels, threshold=17, stretch=6, rising_step=10):
 
         self.threshold = threshold
         self.stretch = stretch
+        self.rising_step = rising_step
 
         self.levelsBeat = []
         self.levelsLast = []
@@ -32,7 +33,8 @@ class BeatDetection():
         #[bass,kick,snare,hh,vocal]
         beat = False
 
-        # print len(self.levelsBeat)
+        print 'bd', levels
+        
 
         ''' Itterate through level '''
         for x in xrange(len(levels)):
@@ -43,7 +45,7 @@ class BeatDetection():
                 beat = True
                 ''' If new level > old level + 2
                 level is just rising '''
-            elif (levels[x] > self.levelsLast[x]+2):
+            elif (levels[x] > self.levelsLast[x]+self.rising_step):
                 self.levelsEdge[x] = True
                 self.levelsBeat[x] = False
                 ''' level is not rising or a beat '''

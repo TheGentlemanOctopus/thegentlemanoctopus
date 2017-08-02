@@ -46,7 +46,11 @@ class AudioProcessing(threading.Thread):
             self.server.start()
         
         ''' create BeatDetection '''
-        self.bd = BeatDetection(7, args['BD_threshold'], args['BD_stretch'])
+        self.bd = BeatDetection(7, 
+            threshold=args['BD_threshold'], 
+            stretch=args['BD_stretch'],
+            rising_step=args['BD_rising_step']
+            )
 
 
     def terminate(self):
