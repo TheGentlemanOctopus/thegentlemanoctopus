@@ -60,7 +60,7 @@ class AudioProcessing(threading.Thread):
     def run(self):
         ''' main worker method '''
         try:
-            while(not self.stop.wait(0.01)):
+            while(not self.stop.wait(0.0001)):
                 ''' simulated '''
                 if self.sim:
                     # print 'simulate'
