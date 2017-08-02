@@ -33,7 +33,7 @@ class Fish(Device):
             if not self.audio_q.empty():
                 ''' take latest element '''
                 msg = self.audio_q.queue[-1]
-                print msg
+                # print msg
                 # ''' clear old data '''
                 # with self.audio_q.mutex:
                 #     self.audio_q.queue.clear()
