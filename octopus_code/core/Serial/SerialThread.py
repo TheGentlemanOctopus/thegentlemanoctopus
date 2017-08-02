@@ -47,7 +47,7 @@ class SerialThread(threading.Thread):
 
             if not self.dataQueue.empty():
                 msg = self.dataQueue.get()
-
+                print msg
                 self.ser.flushOutput()
                 for i in xrange(len(msg)):
                     # if beats[i]:
@@ -56,7 +56,7 @@ class SerialThread(threading.Thread):
                     #     data[i] = chr(97+i)
                     if msg[i]:
                         c = chr(97+i)
-                        print 'serial thread beat', c                        
+                        print 'serial thread beat', c , i                       
                         self.ser.write(c)
 
                 time.sleep(1.0/10000.0);
