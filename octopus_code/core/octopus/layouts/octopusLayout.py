@@ -9,7 +9,7 @@ from mantle import Mantle
 #TODO: color mappings
 class OctopusLayout:
     ''' An octopus layout represents the morphology and spatial distribution of its chromatophores'''
-    def __init__(self, mantle_radius, tentacle_length, pixels_per_strip):
+    def __init__(self, mantle_radius=0.5, tentacle_length=3, pixels_per_strip=31):
         ''' mantle_radius is the radius of its mantle 
             tentacle_length is the unit length of each tentacle
             each tentacle has two led_strips each with pixels_per_strip chromatophores
@@ -18,12 +18,14 @@ class OctopusLayout:
         self.tentacle_length = tentacle_length
         self.pixels_per_strip = pixels_per_strip
 
+
         # Cotruct Tentacles
         self.tentacles = []
         for theta in np.linspace(0, (14.0/8.0)*np.pi, 8):
             self.tentacles.append(Tentacle(mantle_radius, theta, tentacle_length, pixels_per_strip))
 
-        # Construct mantle pixels
+        self.radius = np.max([pixel.location[0] for pixel in self.pixels()])
+
         self.mantle = Mantle(mantle_radius, pixels_per_strip)
 
     def clone(self):
@@ -146,7 +148,7 @@ def plot_octopus(octopus_layout):
 
 # Just your everyday octopus :)
 if __name__ == '__main__':
-    octopus = OctopusLayout(0.5, 3, 31)
+    octopus = OctopusLayout()
 
     filepath = 'octopusLayout.json'
     octopus.export(filepath)
