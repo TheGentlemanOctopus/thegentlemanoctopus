@@ -8,8 +8,8 @@ import time
 class Carousel2(Pattern):
     # Speed is in degress per second
     def __init__(self, speed=180):
-        self.register_param("hue_offset", 0, 1, 0.5)
-        self.register_param("hue_sweep", 0, 1, 0.2)
+        self.register_param("hue_offset", 0, 1, 0.7)
+        self.register_param("hue_sweep", 0, 1, 0.3)
 
         self.register_param("saturation", 0, 1, 1)
         self.register_param("value", 0, 1, 0.8)
@@ -17,7 +17,7 @@ class Carousel2(Pattern):
         # Deg per second
         self.register_param("ang_velocity", 0, 300, 150)
 
-        self.register_param("speed_gradient", -300, 300, 120)
+        self.register_param("speed_gradient", -300, 300, 70)
         self.register_param("speed_offset", -100, 100, -5)
 
         self.t = time.time()
