@@ -76,6 +76,9 @@ class OctopusLayout:
 
     def opc_pixels(self):
         pixels = self.pixels_zig_zag()
+        pixels.extend(self.mantle.pixels)
+
+        return pixels
 
 
     def export(self, filepath):
@@ -83,7 +86,7 @@ class OctopusLayout:
         
         # Include metadata in the first pixel object
         # TODO: a bit hacky is there a better way?
-        pixels = [{'point': pixel.location.tolist()} for pixel in self.pixels_zig_zag()]
+        pixels = [{'point': pixel.location.tolist()} for pixel in self.opc_pixels()]
         pixels[0]['metadata'] = {
             'mantle_radius': self.mantle_radius,
             'tentacle_length' : self.tentacle_length,

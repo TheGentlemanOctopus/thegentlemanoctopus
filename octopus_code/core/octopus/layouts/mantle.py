@@ -20,9 +20,8 @@ class Mantle:
         x_anti = cos_anti*x - sin_anti*y
         y_anti = sin_anti*x + cos_anti*y
 
-        pixels = []
         for i in range(len(x)):
-            pixels.append(Pixel(np.array([x_anti[i], y_anti[i], z[i]])))
+            self.pixels.append(Pixel(np.array([x_anti[i], y_anti[i], z[i]])))
 
         cos_clock = np.cos(np.pi-dtheta)
         sin_clock = np.sin(np.pi-dtheta)
@@ -31,4 +30,16 @@ class Mantle:
         y_clock = sin_clock*x + cos_clock*y
 
         for i in range(len(x)):
-            pixels.append(Pixel(np.array([x_clock[i], y_clock[i], z[i]])))
+            self.pixels.append(Pixel(np.array([x_clock[i], y_clock[i], z[i]])))
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    mantle = Mantle(1, 32)
+
+    x = [pixel.location[0] for pixel in mantle.pixels]
+    y = [pixel.location[1] for pixel in mantle.pixels]
+    z = [pixel.location[2] for pixel in mantle.pixels]
+
+    plt.scatter(x,y,z)
+    plt.show()
