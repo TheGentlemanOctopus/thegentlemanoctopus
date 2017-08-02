@@ -5,7 +5,7 @@ import numpy as np
 import colorsys
 import time
 
-class Carousel2(Pattern):
+class CarouselPattern(Pattern):
     # Speed is in degress per second
     def __init__(self, speed=180):
         # self.register_param("hue_offset", 0, 1, 0.7)
