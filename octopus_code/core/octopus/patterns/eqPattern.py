@@ -1,5 +1,7 @@
 from pattern import Pattern
 import itertools
+import random
+import colorsys
 
 class EqPattern(Pattern):
     def __init__(self, meter_color=(255,100,50), background_color=(0,50,255)):
@@ -11,13 +13,32 @@ class EqPattern(Pattern):
         self.register_param("bg_g", 0, 255, background_color[1])
         self.register_param("bg_b", 0, 255, background_color[2])
 
+        self.register_param("max_hue_shift", 0, 0.5, 0.2)
+
     def meter_color(self):
         return (self.meter_r, self.meter_g, self.meter_b)
 
     def background_color(self):
         return (self.bg_r, self.bg_g, self.bg_b)
 
+    # TODO: put this into utils or something
+    def hue_shift(self, color, hue_shift):
+        color_scaled = [x/255.0 for x in color]
+        hsv = list(colorsys.rgb_to_hsv(color_scaled[0], color_scaled[1], color_scaled[2]))
+        hsv[0] += hue_shift % 1
+
+        return tuple([int(x*255) for x in colorsys.hsv_to_rgb(hsv[0], hsv[1], hsv[2])])
+
+
     def next_frame(self, octopus, data):
+        if True in data.beats:
+            shift = self.max_hue_shift*(2*random.random() - 1)
+
+            if int(round(random.random())):
+                self.meter_r, self.meter_g, self.meter_b = self.hue_shift(self.meter_color(), shift)
+            else:
+                self.bg_r, self.bg_g, self.bg_b = self.hue_shift(self.background_color(), shift)
+
         meter_color = self.meter_color()
         background_color = self.background_color()
 

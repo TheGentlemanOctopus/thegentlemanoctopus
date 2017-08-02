@@ -109,9 +109,12 @@ class GentlemanOctopus(Device):
             with self.audio_stream_queue.mutex:
                 raw_data = self.audio_stream_queue.queue[-1]
                 eq = raw_data[:7]
+                beats = raw_data[7:]
+                
 
             # TODO: Set bit depth somewhere
             self.pattern_stream_data.set_eq(tuple([int(eq_level)/1024.0 for eq_level in eq]))
+            self.pattern_stream_data.beats = beats
             self.queue_last_receive = time.time()
 
 

@@ -4,10 +4,11 @@ import sys
 
 # For a 7 band eq
 class PatternStreamData:
-    def __init__(self, level=0, eq=(0,0,0,0,0,0,0), rhythm_channel=0):
+    def __init__(self, level=0, eq=(0,0,0,0,0,0,0), rhythm_channel=0, beats = []):
         self.level = level
         self.eq = eq
         self.rhythm_channel = rhythm_channel
+        self.beats = beats
 
     def set_eq(self, eq):
         self.eq = eq
