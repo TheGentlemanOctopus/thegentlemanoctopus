@@ -44,18 +44,29 @@ class CarouselPattern(Pattern):
         dt = self.dt()
 
         #Get polar coordinates
-        polar = np.array([pixel.polar_location() for pixel in pixels])
+        locations = np.array([pixel.location for pixel in pixels])
 
-        r = polar[:,0]
-        phi = polar[:,1]
+        x = locations[:,0]
+        y = locations[:,1]
+        z = locations[:,2]
+
+        r = np.linalg.norm(locations, axis=1)
+        phi = np.arctan2(y, x)
 
         self.hue_offset = (self.hue_offset + dt*data.eq[3]*self.hue_rate) % 1
 
         #Go rotational
+        angular_velocity = self.speed_gradient*r + self.speed_offset
+        d_phi = dt*angular_velocity
+        cos = np.cos(np.radians(d_phi))
+        sin = np.sin(np.radians(d_phi))
+
+        # rotation matrix
+        new_x = cos*x - sin*y
+        new_y = sin*x + cos*y
+
         for i in range(len(pixels)):
-            angular_velocity = self.speed_gradient*r[i] + self.speed_offset
-            d_phi = dt*angular_velocity
-            pixels[i].rotate(d_phi)
+            pixels[i].location = np.array([new_x[i], new_y[i], z[i]])
 
         #Set HSV
         h = self.hue_offset + 0.5*self.hue_sweep*np.sin(phi)
