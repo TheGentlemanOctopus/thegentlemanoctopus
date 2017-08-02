@@ -24,7 +24,7 @@ class ShambalaPattern(Pattern):
             SpiralOutFast(),
             #SpiralInFast(),
             LavaLampPattern2(),
-            CarouselPattern()
+            #CarouselPattern()
         ]
 
         self.last_transition = 0
