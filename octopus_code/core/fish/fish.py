@@ -13,10 +13,10 @@ class Fish(Device):
         Device.__init__(self, control_queue=self.ctrl_q, audio_stream_queue=self.audio_q)
         
 
-        dataQueue = Queue.Queue(1000)
+        self.dataQueue = Queue.Queue(1000)
 
         self.serialTh = SerialThread(
-            dataQueue,
+            self.dataQueue,
             sim=conf['sim'],
             port=conf['port'], 
             baud=conf['baud'], 
@@ -33,6 +33,7 @@ class Fish(Device):
         if not self.audio_q.empty():
             ''' take latest element '''
             msg = self.audio_q.queue[-1]
+            print msg
             ''' clear old data '''
             with self.audio_q.mutex:
                 self.audio_q.queue.clear()
