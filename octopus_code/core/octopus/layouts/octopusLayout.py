@@ -3,6 +3,7 @@ import json
 import os
 
 from tentacle import Tentacle
+from mantle import Mantle
 
 
 #TODO: color mappings
@@ -21,6 +22,9 @@ class OctopusLayout:
         self.tentacles = []
         for theta in np.linspace(0, (14.0/8.0)*np.pi, 8):
             self.tentacles.append(Tentacle(mantle_radius, theta, tentacle_length, pixels_per_strip))
+
+        # Construct mantle pixels
+        self.mantle = Mantle(mantle_radius, pixels_per_strip)
 
     def clone(self):
         ''' create a new identical octopus layout from an existing one'''
@@ -69,6 +73,9 @@ class OctopusLayout:
                 pixels.append(led_strip[count])
 
         return pixels
+
+    def opc_pixels(self):
+        pixels = self.pixels_zig_zag()
 
 
     def export(self, filepath):
