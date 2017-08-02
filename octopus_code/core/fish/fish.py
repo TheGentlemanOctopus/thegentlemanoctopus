@@ -12,7 +12,6 @@ class Fish(Device):
         self.audio_q = audio_stream_queue
         Device.__init__(self, control_queue=self.ctrl_q, audio_stream_queue=self.audio_q)
         
-
         self.dataQueue = Queue.Queue(1000)
 
         self.serialTh = SerialThread(
@@ -28,18 +27,19 @@ class Fish(Device):
 
     # TODO: Make this non-blocking
     def run(self):
-        print 'fsh run'
+        print 'fsh run\n'
         ''' check audio queue '''
-        if not self.audio_q.empty():
-            ''' take latest element '''
-            msg = self.audio_q.queue[-1]
-            print msg
-            ''' clear old data '''
-            with self.audio_q.mutex:
-                self.audio_q.queue.clear()
-            ''' pass beat data to serial thread '''
-            self.dataQueue.put(msg[7:])
-        time.sleep(1.0/10000.0);
+        while  True:
+            if not self.audio_q.empty():
+                ''' take latest element '''
+                msg = self.audio_q.queue[-1]
+                print msg
+                ''' clear old data '''
+                with self.audio_q.mutex:
+                    self.audio_q.queue.clear()
+                ''' pass beat data to serial thread '''
+                self.dataQueue.put(msg[7:])
+            time.sleep(1.0/10000.0);
 
 
 
