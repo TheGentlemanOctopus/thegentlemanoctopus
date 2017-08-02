@@ -121,7 +121,8 @@ class OctopusScene():
             opc_host=self.conf_routing['OPC_ip'], 
             opc_port=self.conf_routing['OPC_port'],
             patterns=patternList.patterns,
-            enable_status_monitor=enable_status_monitor
+            enable_status_monitor=enable_status_monitor,
+            brightness=int(self.conf_pattern_gen["brightness"])/100.0
         )
         self.gentleman_octopus.start()
 
