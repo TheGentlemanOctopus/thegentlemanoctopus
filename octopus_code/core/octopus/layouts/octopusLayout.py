@@ -17,10 +17,16 @@ class OctopusLayout:
         self.tentacle_length = tentacle_length
         self.pixels_per_strip = pixels_per_strip
 
+
         # Cotruct Tentacles
         self.tentacles = []
         for theta in np.linspace(0, (14.0/8.0)*np.pi, 8):
             self.tentacles.append(Tentacle(mantle_radius, theta, tentacle_length, pixels_per_strip))
+
+        self.radius = np.max([pixel.location[0] for pixel in self.pixels()])
+
+    def radius(self):
+        return np.min([self])
 
     def clone(self):
         ''' create a new identical octopus layout from an existing one'''

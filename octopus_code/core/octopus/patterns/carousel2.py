@@ -8,17 +8,18 @@ import time
 class Carousel2(Pattern):
     # Speed is in degress per second
     def __init__(self, speed=180):
-        self.register_param("hue_offset", 0, 1, 0.7)
+        # self.register_param("hue_offset", 0, 1, 0.7)
+        self.hue_offset = 0
+
         self.register_param("hue_sweep", 0, 1, 0.3)
 
         self.register_param("saturation", 0, 1, 1)
         self.register_param("value", 0, 1, 0.8)
 
-        # Deg per second
-        self.register_param("ang_velocity", 0, 300, 150)
-
-        self.register_param("speed_gradient", -300, 300, 70)
+        self.register_param("speed_gradient", -300, 300, 80)
         self.register_param("speed_offset", -100, 100, -5)
+
+        self.register_param("hue_rate", 0, 1, 0.1)
 
         self.t = time.time()
 
@@ -48,15 +49,16 @@ class Carousel2(Pattern):
         r = polar[:,0]
         phi = polar[:,1]
 
+        self.hue_offset = (self.hue_offset + dt*data.eq[3]*self.hue_rate) % 1
+
         #Go rotational
         for i in range(len(pixels)):
             angular_velocity = self.speed_gradient*r[i] + self.speed_offset
-            d_phi = dt * angular_velocity
+            d_phi = dt*angular_velocity
             pixels[i].rotate(d_phi)
 
         #Set HSV
         h = self.hue_offset + 0.5*self.hue_sweep*np.sin(phi)
-
         s = self.saturation*np.ones(len(pixels))
         v = self.value*np.ones(len(pixels))
         

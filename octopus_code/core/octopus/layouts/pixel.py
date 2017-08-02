@@ -25,6 +25,13 @@ class Pixel:
     def radius(self):
         return np.linalg.norm(self.location)
 
+    def set_radius(self, r):
+        _, theta = self.polar_location()
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+
+        self.location = np.array([x, y, self.location[2]])
+
     def polar_location(self):
         r = np.linalg.norm(self.location)
         theta = np.arctan2(self.location[1], self.location[0])
