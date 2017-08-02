@@ -38,7 +38,8 @@ class GentlemanOctopus(Device):
         framerate = 20,
         enable_status_monitor=True,
         queue_receive_timeout=10,
-        patterns = None
+        patterns = None,
+        brightness = 1.0,
     ):
         """ octopus is a octopus layout"""
 
@@ -83,6 +84,7 @@ class GentlemanOctopus(Device):
         if self.enable_status_monitor:
             self.kb = kbHit.KBHit()    
 
+        self.brightness = brightness
 
     # def run(self):
     #     self.update()
@@ -130,7 +132,12 @@ class GentlemanOctopus(Device):
                 tenty_pixel = next(cycle)
                 pixel.color = tenty_pixel.color
 
-            pixels = [pixel.color for pixel in self.octopus_layout.opc_pixels()]
+            # Set brightness
+            # TODO: is array based processing significantly more efficient?
+            pixels = []
+            for pixel in self.octopus_layout.opc_pixels():
+                pixels.append([int(x*self.brightness) for x in pixel.color])
+
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             print traceback.format_exc()
