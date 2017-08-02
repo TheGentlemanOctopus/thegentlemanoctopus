@@ -94,7 +94,7 @@ class opcClient():
                 print p, col.rgb
                 pixels.append(col.rgb)                    
 
-            self.client.put_pixels(pixels, channel=0)
+            self.client.put_pixels(pixels, channel=1)
             time.sleep(1 / fps)
             # time.sleep(1/fps)
 
@@ -104,16 +104,17 @@ class opcClient():
 if __name__ == '__main__':
 
 
-    host = 'localhost'
-    port = 8000
+    host = '192.168.1.52'
+    port = 7890
 
+    arg = '192.168.1.52:7890'
 
     ''' start opc client '''
     print "before start opc client" 
     # opc = opcClient(dataQueue, opcIP_PORT='192.168.2.6:7790')
     # opc = opcClient(opcIP_PORT='192.168.0.100:7790')
 
-    opc = opcClient()
+    opc = opcClient(opcIP_PORT=arg)
     print "after start opc client" 
     opc.run()
 

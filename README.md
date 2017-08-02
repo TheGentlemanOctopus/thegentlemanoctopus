@@ -80,3 +80,30 @@ For example, `userInputClient.py` repeatedly sends key value pairs from the comm
 `streamWavClient.py` plays a .wav file while streaming level and eq data. With the PatternGenerator running try
 
 `python rpcClients/streamWavClient.py ../examples/FFT/DaftPunk.wav`
+
+### Running on Odroid ###
+
+ssh to odroid
+```bash
+ssh odroid@192.168.1.42
+```
+
+run screen 
+```bash
+screen
+```
+
+run start script
+```bash
+./runOctopus.sh
+```
+
+to detatch screen session
+```bash
+ctrl+a   then d
+```
+
+to return to active session 
+```bash
+screen -r
+```

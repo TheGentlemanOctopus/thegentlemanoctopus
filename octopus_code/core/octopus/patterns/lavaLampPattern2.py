@@ -12,13 +12,16 @@ class LavaLampPattern2(Pattern):
         self.register_param("speed_b", 0, 10, 1.5)
         self.register_param("blob_speed", 0, 10, 1)
 
-        self.register_param("time_warp", 0, 10, 1)
+        self.register_param("time_warp", 0, 3, 0.1)
 
         self.t = time.time()
 
+
     def next_frame(self, octopus, data):
+        level = data.eq[3]
+
         # The level gives a little speed boost
-        self.t += (time.time()-self.t) + self.time_warp*data.level
+        self.t += (time.time()-self.t) + self.time_warp*level
 
         # Pull out x,y,z
         pixels = octopus.pixels()
@@ -27,17 +30,13 @@ class LavaLampPattern2(Pattern):
         z = np.array([pixel.location[2] for pixel in pixels])
 
         # Sine Time
-        r = 255*0.5*(1+np.sin(2*np.pi*self.freq*x + self.t*self.speed_r))
-        g = 255*0.5*(1+np.sin(2*np.pi*self.freq*y + self.t*self.speed_g))
-        b = 255*0.5*(1+np.sin(2*np.pi*self.freq*z + self.t*self.speed_b))
+        r = 255*0.5*(1+np.sin(2*np.pi*self.freq*x*(1) + self.t*self.speed_r))
+        g = 0.5*255*0.5*(1+np.sin(2*np.pi*self.freq*y + self.t*self.speed_g))
 
-        g = g * 0.6 + (r+b) * 0.2
+        ones = np.ones(len(z))
+        b = level*255*ones
 
-        # TODO: black out regions?
-        clamp_freq = 1/3.0
-        r_clamp = np.cos(x*2*np.pi*clamp_freq + self.t*self.blob_speed + 12)
-        g_clamp = np.cos(y*2*np.pi*clamp_freq + self.t*self.blob_speed + 24)
-        b_clamp = np.cos(z*2*np.pi*clamp_freq + self.t*self.blob_speed + 34)
+        #g = g * 0.6 + (r+b) * 0.2
 
         for i in range(len(pixels)):
-            pixels[i].color = (int(r[i]), int(b[i]), int(g[i]))
+            pixels[i].color = (int(r[i]), int(g[i]), int(b[i]))

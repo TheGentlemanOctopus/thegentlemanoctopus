@@ -60,7 +60,7 @@ class OctopusScene():
     def main_loop(self,  run_time=10):
         ''' pole rpc queue for new commands and distrubute to scene 
         devices as needed '''
-        self.gentleman_octopus.run()
+        self.gentleman_octopus.run(timeout=run_time)
 
     def process_config(self):
 
