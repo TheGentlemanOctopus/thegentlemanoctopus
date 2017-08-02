@@ -192,7 +192,7 @@ class GentlemanOctopus(Device):
         return index
 
     # Adjusts the parameter given the keyboard key
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = False
 
         for mapping in self.key_mappings:
@@ -265,7 +265,7 @@ class KeyMapping:
 
     # Adjusts the parameter given the keyboard key
     # Returns True if the key arg matches, False otherwise
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = True
 
         # Find how big a nudge
