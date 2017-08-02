@@ -80,7 +80,8 @@ class GentlemanOctopus(Device):
         self.set_default_pattern()
         
         #For detecting keyboard presses
-        self.kb = kbHit.KBHit()    
+        if self.enable_status_monitor:
+            self.kb = kbHit.KBHit()    
 
 
     # def run(self):
@@ -88,18 +89,19 @@ class GentlemanOctopus(Device):
 
     #Returns None if we should quit
     def update(self):
+
         # Handle Keyboard Input
-        if self.kb.kbhit():
-            key = self.kb.getch()
-            if key == 'q':
-                return None
-            elif key == 'w':
-                pattern_index = self.previous_pattern()
-            elif key =='s':
-                pattern_index = self.next_pattern()
-            elif self.nudge_param(key):
-                if self.enable_status_monitor:
-                    self.print_status()
+        if self.enable_status_monitor:
+            if self.kb.kbhit():
+                key = self.kb.getch()
+                if key == 'q':
+                    return None
+                elif key == 'w':
+                    pattern_index = self.previous_pattern()
+                elif key =='s':
+                    pattern_index = self.next_pattern()
+                elif self.nudge_param(key):
+                        self.print_status()
 
         # Read from data queue
         if not self.audio_stream_queue.empty():
