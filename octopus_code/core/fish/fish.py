@@ -34,9 +34,9 @@ class Fish(Device):
                 ''' take latest element '''
                 msg = self.audio_q.queue[-1]
                 print msg
-                ''' clear old data '''
-                with self.audio_q.mutex:
-                    self.audio_q.queue.clear()
+                # ''' clear old data '''
+                # with self.audio_q.mutex:
+                #     self.audio_q.queue.clear()
                 ''' pass beat data to serial thread '''
                 self.dataQueue.put(msg[7:])
             time.sleep(1.0/10000.0);
