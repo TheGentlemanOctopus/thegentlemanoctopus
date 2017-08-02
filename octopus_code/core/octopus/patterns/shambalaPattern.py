@@ -4,10 +4,11 @@ import numpy as np
 
 #from patterns.solidColorPattern import SolidColorPattern, SpiralOut, PulseOut, SpiralOutFast, IntegrateF, GridPattern, HelicopterEq
 from core.octopus.patterns.rainbowPlaidEqPattern import RainbowPlaidEqPattern
-from core.octopus.patterns.lavaLampPattern import LavaLampPattern
+from core.octopus.patterns.lavaLampPattern2 import LavaLampPattern2
 from core.octopus.patterns.eqPattern import EqPattern
 from core.octopus.patterns.spiralOutFast import SpiralOutFast
 from core.octopus.patterns.spiralInFast import SpiralInFast
+from core.octopus.patterns.carouselPattern import CarouselPattern
 
 
 import time
@@ -19,10 +20,11 @@ class ShambalaPattern(Pattern):
     def __init__(self):
         self.patterns = [
             #RainbowPlaidEqPattern(),
+            EqPattern(),
             SpiralOutFast(),
             #SpiralInFast(),
-            #LavaLampPattern(),
-            EqPattern()
+            LavaLampPattern2(),
+            #CarouselPattern()
         ]
 
         self.last_transition = 0

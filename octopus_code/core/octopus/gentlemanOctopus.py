@@ -84,7 +84,12 @@ class GentlemanOctopus(Device):
         if self.enable_status_monitor:
             self.kb = kbHit.KBHit()    
 
-        self.brightness = brightness
+        # An int to divide colors by efficiently
+        self.darkness = 255*(1 - brightness)
+        if self.darkness<1:
+            self.darkness = 1
+        elif self.darkness>255:
+            self.darkness = 255
 
     # def run(self):
     #     self.update()
@@ -134,9 +139,9 @@ class GentlemanOctopus(Device):
 
             # Set brightness
             # TODO: is array based processing significantly more efficient?
-            pixels = []
-            for pixel in self.octopus_layout.opc_pixels():
-                pixels.append([int(x*self.brightness) for x in pixel.color])
+            pixels = np.array([pixel.color for pixel in self.octopus_layout.opc_pixels()], dtype="uint8")
+            pixels /= self.darkness
+            pixels = pixels.tolist()
 
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
@@ -206,7 +211,7 @@ class GentlemanOctopus(Device):
         return index
 
     # Adjusts the parameter given the keyboard key
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = False
 
         for mapping in self.key_mappings:
@@ -279,7 +284,7 @@ class KeyMapping:
 
     # Adjusts the parameter given the keyboard key
     # Returns True if the key arg matches, False otherwise
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = True
 
         # Find how big a nudge
