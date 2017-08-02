@@ -5,15 +5,25 @@ import colorsys
 
 class EqPattern(Pattern):
     def __init__(self, meter_color=(255,100,50), background_color=(0,50,255)):
-        self.register_param("meter_r", 0, 255, meter_color[0])
-        self.register_param("meter_g", 0, 255, meter_color[1])
-        self.register_param("meter_b", 0, 255, meter_color[2])
+        self.meter_r = meter_color[0]
+        self.meter_g = meter_color[1]
+        self.meter_b = meter_color[2]
 
-        self.register_param("bg_r", 0, 255, background_color[0])
-        self.register_param("bg_g", 0, 255, background_color[1])
-        self.register_param("bg_b", 0, 255, background_color[2])
+        self.bg_r = background_color[0]
+        self.bg_g = background_color[1]
+        self.bg_b = background_color[2]
+
+        # TODO: delete?
+        # self.register_param("meter_r", 0, 255, meter_color[0])
+        # self.register_param("meter_g", 0, 255, meter_color[1])
+        # self.register_param("meter_b", 0, 255, meter_color[2])
+
+        # self.register_param("bg_r", 0, 255, background_color[0])
+        # self.register_param("bg_g", 0, 255, background_color[1])
+        # self.register_param("bg_b", 0, 255, background_color[2])
 
         self.register_param("max_hue_shift", 0, 0.5, 0.2)
+        self.register_param("beat_channel", 0, 6, 2)
 
     def meter_color(self):
         return (self.meter_r, self.meter_g, self.meter_b)
@@ -31,7 +41,9 @@ class EqPattern(Pattern):
 
 
     def next_frame(self, octopus, data):
-        if True in data.beats:
+        beat_channel = int(round(self.beat_channel))
+
+        if data.beats[beat_channel]:
             shift = self.max_hue_shift*(2*random.random() - 1)
 
             if int(round(random.random())):

@@ -114,7 +114,7 @@ class GentlemanOctopus(Device):
 
             # TODO: Set bit depth somewhere
             self.pattern_stream_data.set_eq(tuple([int(eq_level)/1024.0 for eq_level in eq]))
-            self.pattern_stream_data.beats = beats
+            self.pattern_stream_data.set_beats(beats)
             self.queue_last_receive = time.time()
 
 

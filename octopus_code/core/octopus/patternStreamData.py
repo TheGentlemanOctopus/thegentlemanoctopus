@@ -4,7 +4,7 @@ import sys
 
 # For a 7 band eq
 class PatternStreamData:
-    def __init__(self, level=0, eq=(0,0,0,0,0,0,0), rhythm_channel=0, beats = []):
+    def __init__(self, level=0, eq=(0,0,0,0,0,0,0), rhythm_channel=0, beats=[False, False, False, False, False, False, False]):
         self.level = level
         self.eq = eq
         self.rhythm_channel = rhythm_channel
@@ -13,6 +13,14 @@ class PatternStreamData:
     def set_eq(self, eq):
         self.eq = eq
         self.level = eq[self.rhythm_channel]
+
+    #TODO: these checks are unnecessary when auidoDetection links up with my integrationTests
+    def set_beats(self, beats):
+        self.beats = [False for i in range(7)]
+
+        for i in range(min([7, beats])):
+            self.beats[i] = beats[i]
+
 
     def siney_time(self, frequency=1.0/5):
         t = time.time()
