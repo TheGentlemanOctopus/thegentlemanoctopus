@@ -33,7 +33,8 @@ class BeatDetection():
         #[bass,kick,snare,hh,vocal]
         beat = False
 
-        # print len(self.levelsBeat)
+        print 'bd', levels
+        
 
         ''' Itterate through level '''
         for x in xrange(len(levels)):
