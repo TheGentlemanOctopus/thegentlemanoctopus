@@ -54,7 +54,7 @@ class SerialThread(threading.Thread):
                     #     data[i] = chr(65+i)
                     # else:
                     #     data[i] = chr(97+i)
-                    if beats[i]:
+                    if msg[i]:
                         c = chr(97+i)
                         print 'serial thread beat', c                        
                         self.ser.write(c)
