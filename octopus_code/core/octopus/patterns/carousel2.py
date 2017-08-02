@@ -17,6 +17,9 @@ class Carousel2(Pattern):
         # Deg per second
         self.register_param("ang_velocity", 0, 300, 150)
 
+        self.register_param("speed_gradient", -300, 300, 120)
+        self.register_param("speed_offset", -100, 100, -5)
+
         self.t = time.time()
 
     # Reset tings
@@ -46,10 +49,10 @@ class Carousel2(Pattern):
         phi = polar[:,1]
 
         #Go rotational
-        d_phi = dt * self.ang_velocity
-        for pixel in pixels:
-            pixel.rotate(d_phi)
-
+        for i in range(len(pixels)):
+            angular_velocity = self.speed_gradient*r[i] + self.speed_offset
+            d_phi = dt * angular_velocity
+            pixels[i].rotate(d_phi)
 
         #Set HSV
         h = self.hue_offset + 0.5*self.hue_sweep*np.sin(phi)
@@ -63,52 +66,6 @@ class Carousel2(Pattern):
 
             rgb_255 = [int(255*x) for x in rgb]
             octopus_pixels[i].color = tuple(rgb_255)
-
-
-        # dt = time.time() - self.t
-        # self.t = time.time()
-
-        # for pixel in self.octopus.pixels():
-        #     #TODO: Something nicer
-        #     r = int(np.abs((1.0/3)*255*pixel.location[0]))
-        #     g = int(np.abs((1.0/3)*255*pixel.location[1]))
-        #     b = 20
-
-        #     dtheta = dt*self.speed*np.sin(pixel.radius() + 2*np.pi*np.sin(time.time()))
-
-        #     pixel.rotate(dtheta)
-
-        #     pixel.color = (r,g,b)
-
-        # # Pull out x,y,z
-        # pixels = octopus.pixels()
-        # x = np.array([pixel.location[0] for pixel in pixels])
-        # y = np.array([pixel.location[1] for pixel in pixels])
-        # z = np.array([pixel.location[2] for pixel in pixels])
-
-        # h = 0.5*(1+np.sin(2*np.pi*self.freq*x))
-        # s = self.saturation*np.ones(len(x))
-        # v = 0.5*(1+np.sin(2*np.pi*self.freq*z))
-
-
-        # for i in range(len(pixels)):
-        #     hsv = colorsys.hsv_to_rgb(h[i], s[i], v[i])
-        #     pixels[i].color = tuple([int(255*x) for x in hsv])
-
-
-
-        # # Sine Time
-        # r = 255*0.5*(1+np.sin(2*np.pi*self.freq*x + self.t*self.speed_r))
-        # g = 255*0.5*(1+np.sin(2*np.pi*self.freq*y + self.t*self.speed_g))
-        # b = 255*0.5*(1+np.sin(2*np.pi*self.freq*z + self.t*self.speed_b))
-
-        # g = g * 0.6 + (r+b) * 0.2
-
-
-
-        # for i in range(len(pixels)):
-        #     pixels[i].color = (int(r[i]), int(b[i]), int(g[i]))  
-
 
 
 if __name__ == '__main__':
