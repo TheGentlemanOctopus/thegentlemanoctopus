@@ -56,6 +56,7 @@ class SerialThread(threading.Thread):
                     #     data[i] = chr(97+i)
                     if beats[i]:
                         c = chr(97+i)
+                        print c                        
                         self.ser.write(c)
 
                 time.sleep(1.0/10000.0);
@@ -81,6 +82,7 @@ class SerialThread(threading.Thread):
 
         if not self.sim:
             ''' Connect to serial port '''
+
             try:
                 self.ser = serial.Serial(port = self.port, baudrate = self.baud) 
                 # self.ser = serial.Serial(port = self.port, baudrate = self.baud, 

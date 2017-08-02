@@ -3,6 +3,7 @@ import json
 import os
 
 from tentacle import Tentacle
+from mantle import Mantle
 
 
 #TODO: color mappings
@@ -25,8 +26,7 @@ class OctopusLayout:
 
         self.radius = np.max([pixel.location[0] for pixel in self.pixels()])
 
-    def radius(self):
-        return np.min([self])
+        self.mantle = Mantle(mantle_radius, pixels_per_strip)
 
     def clone(self):
         ''' create a new identical octopus layout from an existing one'''
@@ -76,13 +76,19 @@ class OctopusLayout:
 
         return pixels
 
+    def opc_pixels(self):
+        pixels = self.pixels_zig_zag()
+        pixels.extend(self.mantle.pixels)
+
+        return pixels
+
 
     def export(self, filepath):
         ''' Export octopus into a json file that is compatible with gl server and import '''
         
         # Include metadata in the first pixel object
         # TODO: a bit hacky is there a better way?
-        pixels = [{'point': pixel.location.tolist()} for pixel in self.pixels_zig_zag()]
+        pixels = [{'point': pixel.location.tolist()} for pixel in self.opc_pixels()]
         pixels[0]['metadata'] = {
             'mantle_radius': self.mantle_radius,
             'tentacle_length' : self.tentacle_length,

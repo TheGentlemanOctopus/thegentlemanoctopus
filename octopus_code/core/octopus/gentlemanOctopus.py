@@ -4,7 +4,7 @@ import sys
 import Queue
 import os
 import traceback
-
+import itertools
 
 from core.udp.udpServer import UDPServer
 
@@ -38,7 +38,8 @@ class GentlemanOctopus(Device):
         framerate = 20,
         enable_status_monitor=True,
         queue_receive_timeout=10,
-        patterns = None
+        patterns = None,
+        brightness = 1.0,
     ):
         """ octopus is a octopus layout"""
 
@@ -83,6 +84,7 @@ class GentlemanOctopus(Device):
         if self.enable_status_monitor:
             self.kb = kbHit.KBHit()    
 
+        self.brightness = brightness
 
     # def run(self):
     #     self.update()
@@ -123,7 +125,19 @@ class GentlemanOctopus(Device):
         # Send some pixels
         try:
             self.current_pattern.next_frame(self.octopus_layout, self.pattern_stream_data)
-            pixels = [pixel.color for pixel in self.octopus_layout.pixels_zig_zag()]
+
+            # HACK : This is retrofitted for Truefest, mantle shouldnt always have to = tentacle
+            cycle = itertools.cycle(self.octopus_layout.tentacles[0].pixels_zig_zag())
+            for pixel in self.octopus_layout.mantle.pixels:
+                tenty_pixel = next(cycle)
+                pixel.color = tenty_pixel.color
+
+            # Set brightness
+            # TODO: is array based processing significantly more efficient?
+            pixels = []
+            for pixel in self.octopus_layout.opc_pixels():
+                pixels.append([int(x*self.brightness) for x in pixel.color])
+
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             print traceback.format_exc()
