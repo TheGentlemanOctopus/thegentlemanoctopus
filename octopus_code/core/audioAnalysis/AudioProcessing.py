@@ -46,7 +46,11 @@ class AudioProcessing(threading.Thread):
             self.server.start()
         
         ''' create BeatDetection '''
-        self.bd = BeatDetection(7, args['BD_threshold'], args['BD_stretch'])
+        self.bd = BeatDetection(7, 
+            threshold=args['BD_threshold'], 
+            stretch=args['BD_stretch'],
+            rising_step=args['BD_rising_step']
+            )
 
 
     def terminate(self):
@@ -56,7 +60,7 @@ class AudioProcessing(threading.Thread):
     def run(self):
         ''' main worker method '''
         try:
-            while(not self.stop.wait(0.01)):
+            while(not self.stop.wait(0.0001)):
                 ''' simulated '''
                 if self.sim:
                     # print 'simulate'
@@ -71,7 +75,7 @@ class AudioProcessing(threading.Thread):
                     ''' if queue available then pass to BD '''
                     beat_data = self.bd.detectBeat(fft_data)
 
-
+                    print (fft_data+beat_data)
                     ''' then pass through each queue in list '''
                     for q in self.queues:
                         with q.mutex:

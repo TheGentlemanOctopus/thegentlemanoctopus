@@ -43,10 +43,12 @@ class OctopusScene():
         self.ELQueue = Queue.Queue(100)
         self.fft_queues = [Queue.Queue(100),Queue.Queue(100)]
 
+
+
         ''' init devices '''
         self.init_audio_processing(self.conf_audio, self.fft_queues, self.audio_ctrl)
         print 'f1sh'
-        self.init_fish(self.conf_fish,self.fish_ctrl,self.fft_queues[0])
+        self.init_fish(self.conf_fish,audio_q=self.fft_queues[0],ctrl=self.fish_ctrl,)
         print 'octopus'
         self.init_octopus(self.fft_queues[1], self.octopus_ctrl)
         
@@ -94,16 +96,23 @@ class OctopusScene():
         pass
 
 
-    def init_fish(self, conf, fft_q, ctrl_q):
+    def init_fish(self, conf, audio_q=None, ctrl=None):
         self.fish = Fish(
             conf, 
-            control_queue=ctrl_q, 
-            audio_stream_queue=fft_q
+            control_queue=ctrl, 
+            audio_stream_queue=audio_q
             )
         self.fish.start()
 
 
     def init_octopus(self, fft_q, ctrl_q):
+        # Default to false
+        #TODO: there should be a better way to guarantee the structure of conf
+        if "StatusMonitor" in self.conf_pattern_gen:
+            enable_status_monitor = self.conf_pattern_gen["StatusMonitor"]
+        else:
+            enable_status_monitor = False
+
         octopus_layout = octopusLayout.Import(self.layout_f)
         self.gentleman_octopus = GentlemanOctopus(
             octopus_layout, 
@@ -111,7 +120,9 @@ class OctopusScene():
             audio_stream_queue=fft_q,
             opc_host=self.conf_routing['OPC_ip'], 
             opc_port=self.conf_routing['OPC_port'],
-            patterns=patternList.patterns
+            patterns=patternList.patterns,
+            enable_status_monitor=enable_status_monitor,
+            brightness=int(self.conf_pattern_gen["brightness"])/100.0
         )
         self.gentleman_octopus.start()
 

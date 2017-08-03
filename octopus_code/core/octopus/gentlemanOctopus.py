@@ -38,7 +38,8 @@ class GentlemanOctopus(Device):
         framerate = 20,
         enable_status_monitor=True,
         queue_receive_timeout=10,
-        patterns = None
+        patterns = None,
+        brightness = 1.0,
     ):
         """ octopus is a octopus layout"""
 
@@ -83,6 +84,12 @@ class GentlemanOctopus(Device):
         if self.enable_status_monitor:
             self.kb = kbHit.KBHit()    
 
+        # An int to divide colors by efficiently
+        self.darkness = 255*(1 - brightness)
+        if self.darkness<1:
+            self.darkness = 1
+        elif self.darkness>255:
+            self.darkness = 255
 
     # def run(self):
     #     self.update()
@@ -133,7 +140,12 @@ class GentlemanOctopus(Device):
                 tenty_pixel = next(cycle)
                 pixel.color = tenty_pixel.color
 
-            pixels = [pixel.color for pixel in self.octopus_layout.opc_pixels()]
+            # Set brightness
+            # TODO: is array based processing significantly more efficient?
+            pixels = np.array([pixel.color for pixel in self.octopus_layout.opc_pixels()], dtype="uint8")
+            pixels /= self.darkness
+            pixels = pixels.tolist()
+
         except Exception as e:
             print "WARNING:", self.current_pattern.__class__.__name__, "throwing exceptions"
             print traceback.format_exc()
@@ -202,7 +214,7 @@ class GentlemanOctopus(Device):
         return index
 
     # Adjusts the parameter given the keyboard key
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = False
 
         for mapping in self.key_mappings:
@@ -275,7 +287,7 @@ class KeyMapping:
 
     # Adjusts the parameter given the keyboard key
     # Returns True if the key arg matches, False otherwise
-    def nudge_param(self, key, num_steps=10):
+    def nudge_param(self, key, num_steps=20):
         nudged = True
 
         # Find how big a nudge
