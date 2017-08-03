@@ -16,9 +16,10 @@ class PatternStreamData:
 
     #TODO: these checks are unnecessary when auidoDetection links up with my integrationTests
     def set_beats(self, beats):
+
         self.beats = [False for i in range(7)]
 
-        for i in range(min([7, beats])):
+        for i in range(min([7, len(beats)])):
             self.beats[i] = beats[i]
 
 

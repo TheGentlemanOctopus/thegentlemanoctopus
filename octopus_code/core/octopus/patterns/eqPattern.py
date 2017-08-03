@@ -2,6 +2,7 @@ from pattern import Pattern
 import itertools
 import random
 import colorsys
+import time
 
 class EqPattern(Pattern):
     def __init__(self, meter_color=(255,100,50), background_color=(0,50,255)):
@@ -25,6 +26,13 @@ class EqPattern(Pattern):
         self.register_param("max_hue_shift", 0, 0.5, 0.2)
         self.register_param("beat_channel", 0, 6, 2)
 
+        self.register_param("max_bpm", 0, 200, 100)
+
+        self.register_param("prob_shift", 0, 1, 100)
+
+        self.next_shift = time.time()
+
+
     def meter_color(self):
         return (self.meter_r, self.meter_g, self.meter_b)
 
@@ -43,7 +51,10 @@ class EqPattern(Pattern):
     def next_frame(self, octopus, data):
         beat_channel = int(round(self.beat_channel))
 
-        if data.beats[beat_channel]:
+        t = time.time()
+        if data.beats[beat_channel] and t > self.next_shift:
+            self.next_shift = t + 60.0/self.max_bpm
+
             shift = self.max_hue_shift*(2*random.random() - 1)
 
             if int(round(random.random())):
@@ -53,6 +64,7 @@ class EqPattern(Pattern):
 
         meter_color = self.meter_color()
         background_color = self.background_color()
+
 
         eq = itertools.cycle(data.eq)
 
