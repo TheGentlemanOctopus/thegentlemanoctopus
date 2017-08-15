@@ -33,7 +33,7 @@ class BeatDetection():
         #[bass,kick,snare,hh,vocal]
         beat = False
 
-        print 'bd', levels
+        # print 'bd', levels
         
 
         ''' Itterate through level '''
