@@ -20,6 +20,8 @@ class CarouselPattern(Pattern):
 
         self.t = time.time()
 
+        self.hue_offset = 0
+
     # Reset tings
     def on_pattern_select(self, octopus):
         self.octopus = octopus.clone()
@@ -50,7 +52,7 @@ class CarouselPattern(Pattern):
         r = np.linalg.norm(locations, axis=1)
         phi = np.arctan2(y, x)
 
-        self.hue_offset = (dt*data.eq[3]*self.hue_rate) % 1
+        self.hue_offset += (dt*data.eq[3]*self.hue_rate) % 1
 
         #Go rotational
         angular_velocity = self.speed_gradient*r + self.speed_offset
