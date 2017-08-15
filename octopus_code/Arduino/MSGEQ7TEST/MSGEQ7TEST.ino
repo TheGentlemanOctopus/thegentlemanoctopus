@@ -38,7 +38,7 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0x12, 0x34
 };
 // IP address of arduino 
-IPAddress ip(192, 168, 1, 177);
+IPAddress ip(192, 168, 10, 177);
 
 //variable for ip of master
 IPAddress masterIP;
@@ -88,8 +88,8 @@ void setup()
 
 void loop()
 {
-  int ethernetStatus = Ethernet.maintain();
-  Serial.println(ethernetStatus);
+  //int ethernetStatus = Ethernet.maintain();
+  Serial.println(Connection);
   //Waits for connection and initial start signal from main board
   if(Connection == false)
   { 
