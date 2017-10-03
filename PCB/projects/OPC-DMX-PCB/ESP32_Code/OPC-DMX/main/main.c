@@ -5,7 +5,10 @@
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 #include "driver/gpio.h"
+#include "driver/rmt.h"
+#include "esp_eth.h"
 
+#include "pixel_interface.h"
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     return ESP_OK;
@@ -29,14 +32,7 @@ void app_main(void)
     };
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
-    ESP_ERROR_CHECK( esp_wifi_connect() );
+    ESP_ERROR_CHECK( esp_wifi_connect() )
 
-    gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
-    int level = 0;
-    while (true) {
-        gpio_set_level(GPIO_NUM_4, level);
-        level = !level;
-        vTaskDelay(300 / portTICK_PERIOD_MS);
-    }
 }
 
