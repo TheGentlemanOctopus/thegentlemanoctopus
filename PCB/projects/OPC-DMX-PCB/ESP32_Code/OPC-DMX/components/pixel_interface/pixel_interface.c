@@ -2,7 +2,7 @@
  * pixel_interface.c
  *
  *  Created on: 20 Sep 2017
- *      Author: Ben
+ *      Author: Ben Holden
  */
 
 #include "freertos/FreeRTOS.h"
@@ -13,21 +13,32 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "pixel_interface.h"
-
+#include "driver/rmt.h"
 
 
 /* Do something here... Flashy LEDs probably :^) */
 
-void init_pixel_channels(void)
+void init_pixel_rmt_channel(pixel_channel_config_t* channel)
 {
-	pixel_channel_config_t channels[PIXEL_CHANNEL_MAX];
+	rmt_config_t rmt_parameters;
 
-	for (int i=0; i<PIXEL_CHANNEL_MAX; i++)
-	{
-		channels[i].pixel_channel = i;
-
-	}
-
+	rmt_parameters.channel = channel->rmt_channel;
+	rmt_parameters.clk_div = RMT_DIVIDER;
+	rmt_parameters.gpio_num = channel->gpio_output_pin;
+	rmt_parameters.mem_block_num = RMT_MEM_BLOCK_NUM;
+	rmt_parameters.rmt_mode = RMT_MODE_TX;
+	rmt_parameters.tx_config.carrier_en = false;
+	rmt_parameters.tx_config.loop_en = true;
+	rmt_parameters.tx_config.idle_output_en = true;
+	rmt_parameters.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
+	/* initialise the RMT with settings above */
+	rmt_config(&rmt_parameters);
 
 }
 
+
+
+void send_pixel_data(pixel_channel_config_t* channel)
+{
+	/* This function will be used to write pixel data into the RMT buffer */
+}

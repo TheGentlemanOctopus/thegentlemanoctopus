@@ -10,6 +10,9 @@
 
 #include "driver/rmt.h"
 
+#define RMT_DIVIDER 4
+#define RMT_MEM_BLOCK_NUM 1
+
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -22,21 +25,34 @@ typedef enum {
     PIXEL_CHANNEL_MAX
 } pixel_channel_t;
 
-typedef struct {
-	pixel_channel_t pixel_channel; /* Name of pixel channel*/
-	rmt_channel_t RMT_channel; /* RMT channel to use for outputting the pixel data*/
-	gpio_num_t GPIO_output_pin; /* Pin that the data will be output on */
-	uint32_t channel_length; /* Number of pixels on channel*/
 
+typedef union {
+	struct {
+		uint8_t g;
+		uint8_t	r;
+		uint8_t	b;
+		uint8_t	w;
+	};
 
-
-} pixel_channel_config_t;
-
-typedef struct {
-
+	uint32_t data;
 } pixel_data_t;
 
 
-void init_pixel_channels(void);
+typedef struct {
+	pixel_channel_t pixel_channel; /* Name of pixel channel*/
+	rmt_channel_t rmt_channel; /* RMT channel to use for outputting the pixel data*/
+	gpio_num_t gpio_output_pin; /* Pin that the data will be output on */
+	uint32_t channel_length; /* Number of pixels on channel*/
+	pixel_data_t* pixels; /* Pointer to pixel data */
+
+} pixel_channel_config_t;
+
+
+
+
+void init_pixel_rmt_channel(pixel_channel_config_t* channel);
+void start_pixel_channel(pixel_channel_config_t* channel);
+void stop_pixel_channel(pixel_channel_config_t* channel);
+void send_pixel_data(pixel_channel_config_t* channel);
 
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */
