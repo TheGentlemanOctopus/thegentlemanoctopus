@@ -25,6 +25,17 @@ typedef enum {
     PIXEL_CHANNEL_MAX
 } pixel_channel_t;
 
+typedef enum {
+	LED_WS2812_V1=0,
+	LED_WS2812B_V1,
+	LED_WS2812B_V2,
+	LED_WS2812B_V3,
+	LED_WS2813_V1,
+	LED_WS2813_V2,
+	LED_WS2813_V3,
+	LED_SK6812_V1,
+	LED_SK6812W_V1
+} pixel_type_t;
 
 typedef union {
 	struct {
@@ -44,15 +55,17 @@ typedef struct {
 	gpio_num_t gpio_output_pin; /* Pin that the data will be output on */
 	uint32_t channel_length; /* Number of pixels on channel*/
 	pixel_data_t* pixels; /* Pointer to pixel data */
-
+	pixel_type_t pixel_type;
 } pixel_channel_config_t;
 
 
 
 
-void init_pixel_rmt_channel(pixel_channel_config_t* channel);
-void start_pixel_channel(pixel_channel_config_t* channel);
-void stop_pixel_channel(pixel_channel_config_t* channel);
-void send_pixel_data(pixel_channel_config_t* channel);
+void pixel_init_rmt_channel(pixel_channel_config_t* channel);
+void pixel_create_data_buffer(pixel_channel_config_t* channel);
+void pixel_delete_data_buffer(pixel_channel_config_t* channel);
+void pixel_start_channel(pixel_channel_config_t* channel);
+void pixel_stop_channel(pixel_channel_config_t* channel);
+void pixel_send_data(pixel_channel_config_t* channel);
 
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */

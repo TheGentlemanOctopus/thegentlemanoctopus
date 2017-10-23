@@ -18,8 +18,10 @@
 
 /* Do something here... Flashy LEDs probably :^) */
 
-void init_pixel_rmt_channel(pixel_channel_config_t* channel)
+void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 {
+	periph_module_enable(PERIPH_RMT_MODULE);
+
 	rmt_config_t rmt_parameters;
 
 	rmt_parameters.channel = channel->rmt_channel;
@@ -33,12 +35,23 @@ void init_pixel_rmt_channel(pixel_channel_config_t* channel)
 	rmt_parameters.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
 	/* initialise the RMT with settings above */
 	rmt_config(&rmt_parameters);
+	//rmt_set_tx_loop_mode();
 
 }
 
+void pixel_create_data_buffer(pixel_channel_config_t* channel)
+{
+	/* Allocate memory size of the channel length  */
+	channel->pixels = (pixel_data_t*) malloc(channel->channel_length * sizeof(pixel_data_t));
+}
 
-
-void send_pixel_data(pixel_channel_config_t* channel)
+void pixel_delete_data_buffer(pixel_channel_config_t* channel)
+{
+	/* Deallocate memory buffer memory  */
+	free(channel->pixels);
+	channel->pixels = 0;
+}
+void pixel_send_data(pixel_channel_config_t* channel)
 {
 	/* This function will be used to write pixel data into the RMT buffer */
 }
