@@ -10,8 +10,9 @@
 
 #include "driver/rmt.h"
 
-#define RMT_DIVIDER 4
-#define RMT_MEM_BLOCK_NUM 1
+#define RMT_DIVIDER 4 /* Divide the RMT APB clock by this */
+#define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
+#define RMT_MEM_BLOCK_SIZE 32 /* 32x32bit data per block (fill half a block at a time) */
 
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
@@ -52,10 +53,11 @@ typedef union {
 typedef struct {
 	pixel_channel_t pixel_channel; /* Name of pixel channel*/
 	rmt_channel_t rmt_channel; /* RMT channel to use for outputting the pixel data*/
+	rmt_item32_t* rmt_data; /* Pointer to the data that RMT will use */
 	gpio_num_t gpio_output_pin; /* Pin that the data will be output on */
 	uint32_t channel_length; /* Number of pixels on channel*/
-	pixel_data_t* pixels; /* Pointer to pixel data */
-	pixel_type_t pixel_type;
+	pixel_data_t* pixel_data; /* Pointer to pixel data */
+	pixel_type_t pixel_type; /* Pixel types, eg WS2812 */
 } pixel_channel_config_t;
 
 

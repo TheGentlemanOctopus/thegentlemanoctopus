@@ -31,14 +31,29 @@ esp_err_t pixel_test_init(void)
 
 	pixel_create_data_buffer(&test_channel);
 
+	/* generate some test data */
 	for(uint32_t i=0; i < test_channel.channel_length; i++)
 	{
-		test_channel.pixels[i].r = i;
-		test_channel.pixels[i].g = i+1;
-		test_channel.pixels[i].b = i+2;
-		test_channel.pixels[i].w = i+3;
-		printf("r = %d g = %d b = %d w = %d \n", test_channel.pixels[i].r, test_channel.pixels[i].g, test_channel.pixels[i].b, test_channel.pixels[i].w);
+		test_channel.pixel_data[i].r = i;
+		test_channel.pixel_data[i].g = i+1;
+		test_channel.pixel_data[i].b = i+2;
+		test_channel.pixel_data[i].w = i+3;
+		printf("r = %d g = %d b = %d w = %d \n", test_channel.pixel_data[i].r, test_channel.pixel_data[i].g, test_channel.pixel_data[i].b, test_channel.pixel_data[i].w);
 	}
+
+	/* test the RMT */
+	for(uint32_t j=0; j<64; j++)
+	{
+		test_channel.rmt_data[j].level0 = 1;
+		test_channel.rmt_data[j].duration0 = 1000;
+		test_channel.rmt_data[j].level1 = 0;
+		test_channel.rmt_data[j].duration1 = 4000;
+	}
+
+	printf("rmt starting at address %p \n", test_channel.rmt_data);
+	rmt_tx_start(test_channel.rmt_channel, true);
+
+	printf("rmt started\n");
 
 	return ESP_OK;
 }
@@ -64,6 +79,8 @@ void app_main(void)
 
     pixel_test_init();
 
+
+    printf("Startin2g\n");
 
 
     /* loop */

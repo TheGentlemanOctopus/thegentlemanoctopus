@@ -14,7 +14,7 @@
 #include "driver/gpio.h"
 #include "pixel_interface.h"
 #include "driver/rmt.h"
-
+#include "soc/rmt_struct.h"
 
 /* Do something here... Flashy LEDs probably :^) */
 
@@ -35,21 +35,25 @@ void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 	rmt_parameters.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
 	/* initialise the RMT with settings above */
 	rmt_config(&rmt_parameters);
-	//rmt_set_tx_loop_mode();
+	rmt_set_tx_loop_mode(channel->rmt_channel, true);
+
+	/* Allocate buffer for the RMT data */
+	channel->rmt_data = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel];
+
 
 }
 
 void pixel_create_data_buffer(pixel_channel_config_t* channel)
 {
 	/* Allocate memory size of the channel length  */
-	channel->pixels = (pixel_data_t*) malloc(channel->channel_length * sizeof(pixel_data_t));
+	channel->pixel_data = (pixel_data_t*) malloc(channel->channel_length * sizeof(pixel_data_t));
 }
 
 void pixel_delete_data_buffer(pixel_channel_config_t* channel)
 {
 	/* Deallocate memory buffer memory  */
-	free(channel->pixels);
-	channel->pixels = 0;
+	free(channel->pixel_data);
+	channel->pixel_data = 0;
 }
 void pixel_send_data(pixel_channel_config_t* channel)
 {
