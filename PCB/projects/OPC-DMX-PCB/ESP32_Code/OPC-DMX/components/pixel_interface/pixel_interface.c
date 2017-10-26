@@ -16,6 +16,16 @@
 #include "driver/rmt.h"
 #include "soc/rmt_struct.h"
 
+/* Definitions of pixels */
+const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
+	[PIXEL_WS2812_V1] = {
+			.pixel_bit[PIXEL_BIT_lOW] = { .level0 = 1, .duration0 = 350/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 800/RMT_CLK_DIVIDER},
+			.pixel_bit[PIXEL_BIT_HIGH] = { .level0 = 1, .duration0 = 700/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 600/RMT_CLK_DIVIDER},
+			.pixel_bit[PIXEL_BIT_RESET] = { .level0 = 1, .duration0 = 50000/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 600/RMT_CLK_DIVIDER},
+			.colour_num = 3
+	}
+};
+
 /* Do something here... Flashy LEDs probably :^) */
 
 void pixel_init_rmt_channel(pixel_channel_config_t* channel)
@@ -38,9 +48,7 @@ void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 	rmt_set_tx_loop_mode(channel->rmt_channel, true);
 
 	/* Allocate buffer for the RMT data */
-	channel->rmt_data = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel];
-
-
+	channel->rmt_mem_block = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel];
 }
 
 void pixel_create_data_buffer(pixel_channel_config_t* channel)

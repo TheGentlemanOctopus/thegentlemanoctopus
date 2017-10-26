@@ -41,16 +41,19 @@ esp_err_t pixel_test_init(void)
 		printf("r = %d g = %d b = %d w = %d \n", test_channel.pixel_data[i].r, test_channel.pixel_data[i].g, test_channel.pixel_data[i].b, test_channel.pixel_data[i].w);
 	}
 
+	test_channel.pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
+	uint8_t pixel_bit = 0;
 	/* test the RMT */
-	for(uint32_t j=0; j<64; j++)
+	for(uint32_t j=0; j<62; j++)
 	{
-		test_channel.rmt_data[j].level0 = 1;
-		test_channel.rmt_data[j].duration0 = 1000;
-		test_channel.rmt_data[j].level1 = 0;
-		test_channel.rmt_data[j].duration1 = 4000;
+		//pixel_bit = (test_channel.pixel_data + j)->data ^ 0x01;
+		pixel_bit ^= 1;
+
+		test_channel.rmt_mem_block[j] = test_channel.pixel_type.pixel_bit[pixel_bit];
 	}
 
-	printf("rmt starting at address %p \n", test_channel.rmt_data);
+	test_channel.rmt_mem_block[62] = test_channel.pixel_type.pixel_bit[PIXEL_BIT_RESET];
+	printf("rmt starting at address %p \n", test_channel.rmt_mem_block);
 	rmt_tx_start(test_channel.rmt_channel, true);
 
 	printf("rmt started\n");

@@ -10,10 +10,13 @@
 
 #include "driver/rmt.h"
 
-#define RMT_DIVIDER 4 /* Divide the RMT APB clock by this */
+
 #define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
 #define RMT_MEM_BLOCK_SIZE 32 /* 32x32bit data per block (fill half a block at a time) */
 
+#define RMT_DIVIDER 4 /* Divide the RMT APB clock by this */
+#define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
+#define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -27,16 +30,24 @@ typedef enum {
 } pixel_channel_t;
 
 typedef enum {
-	LED_WS2812_V1=0,
-	LED_WS2812B_V1,
-	LED_WS2812B_V2,
-	LED_WS2812B_V3,
-	LED_WS2813_V1,
-	LED_WS2813_V2,
-	LED_WS2813_V3,
-	LED_SK6812_V1,
-	LED_SK6812W_V1
-} pixel_type_t;
+	PIXEL_WS2812_V1=0,
+	PIXEL_WS2812B_V1,
+	PIXEL_WS2812B_V2,
+	PIXEL_WS2812B_V3,
+	PIXEL_WS2813_V1,
+	PIXEL_WS2813_V2,
+	PIXEL_WS2813_V3,
+	PIXEL_SK6812_V1,
+	PIXEL_SK6812W_V1,
+	PIXEL_NAME_MAX
+} pixel_name_t;
+
+typedef enum {
+	PIXEL_BIT_lOW=0,
+	PIXEL_BIT_HIGH,
+	PIXEL_BIT_RESET,
+	PIXEL_BIT_MAX
+} pixel_bit_type;
 
 typedef union {
 	struct {
@@ -49,19 +60,23 @@ typedef union {
 	uint32_t data;
 } pixel_data_t;
 
+typedef struct{
+	rmt_item32_t pixel_bit[PIXEL_BIT_MAX]; /* Store for the 1 & 0 and reset RMT data */
+	uint8_t colour_num; /* Number of colours in pixel eg, 3 for rgb 4 for rgbw */
+} pixel_type_t;
 
 typedef struct {
 	pixel_channel_t pixel_channel; /* Name of pixel channel*/
 	rmt_channel_t rmt_channel; /* RMT channel to use for outputting the pixel data*/
-	rmt_item32_t* rmt_data; /* Pointer to the data that RMT will use */
+	rmt_item32_t* rmt_mem_block; /* Pointer to the memory block that RMT will use */
 	gpio_num_t gpio_output_pin; /* Pin that the data will be output on */
 	uint32_t channel_length; /* Number of pixels on channel*/
 	pixel_data_t* pixel_data; /* Pointer to pixel data */
 	pixel_type_t pixel_type; /* Pixel types, eg WS2812 */
 } pixel_channel_config_t;
 
-
-
+/* Definitions of pixels */
+extern const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX];
 
 void pixel_init_rmt_channel(pixel_channel_config_t* channel);
 void pixel_create_data_buffer(pixel_channel_config_t* channel);
