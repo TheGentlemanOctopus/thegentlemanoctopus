@@ -12,11 +12,13 @@
 
 
 #define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
-#define RMT_MEM_BLOCK_SIZE 32 /* 32x32bit data per block (fill half a block at a time) */
+#define RMT_MEM_BLOCK_SIZE 64 /* 32x32bit data per block (fill half a block at a time) */
 
-#define RMT_DIVIDER 4 /* Divide the RMT APB clock by this */
+#define RMT_DIVIDER 2 /* Divide the RMT APB clock by this */
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
+
+#define PIXEL_BIT_MASK_INIT 0x01
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -60,10 +62,17 @@ typedef union {
 	uint32_t data;
 } pixel_data_t;
 
-typedef struct{
+typedef struct {
 	rmt_item32_t pixel_bit[PIXEL_BIT_MAX]; /* Store for the 1 & 0 and reset RMT data */
 	uint8_t colour_num; /* Number of colours in pixel eg, 3 for rgb 4 for rgbw */
 } pixel_type_t;
+
+typedef struct {
+	uint32_t rmt_counter;
+	uint8_t rmt_block_max;
+	uint32_t pixel_counter;
+	uint32_t bit_counter;
+} pixel_counter_t;
 
 typedef struct {
 	pixel_channel_t pixel_channel; /* Name of pixel channel*/
@@ -73,6 +82,7 @@ typedef struct {
 	uint32_t channel_length; /* Number of pixels on channel*/
 	pixel_data_t* pixel_data; /* Pointer to pixel data */
 	pixel_type_t pixel_type; /* Pixel types, eg WS2812 */
+	pixel_counter_t counters;
 } pixel_channel_config_t;
 
 /* Definitions of pixels */

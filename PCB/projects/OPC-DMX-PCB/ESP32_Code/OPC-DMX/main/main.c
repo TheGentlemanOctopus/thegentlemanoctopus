@@ -22,7 +22,7 @@ esp_err_t pixel_test_init(void)
     pixel_channel_config_t test_channel;
 	test_channel.gpio_output_pin = GPIO_NUM_4;
 	test_channel.rmt_channel = RMT_CHANNEL_0;
-	test_channel.channel_length = 7;
+	test_channel.channel_length = 2;
 	test_channel.pixel_channel = PIXEL_CHANNEL_0;
 
 	pixel_init_rmt_channel(&test_channel);
@@ -34,26 +34,46 @@ esp_err_t pixel_test_init(void)
 	/* generate some test data */
 	for(uint32_t i=0; i < test_channel.channel_length; i++)
 	{
-		test_channel.pixel_data[i].r = i;
-		test_channel.pixel_data[i].g = i+1;
-		test_channel.pixel_data[i].b = i+2;
-		test_channel.pixel_data[i].w = i+3;
+		test_channel.pixel_data[i].r = 0;
+		test_channel.pixel_data[i].g = 0;
+		test_channel.pixel_data[i].b = 0;
+		test_channel.pixel_data[i].w = 0;
 		printf("r = %d g = %d b = %d w = %d \n", test_channel.pixel_data[i].r, test_channel.pixel_data[i].g, test_channel.pixel_data[i].b, test_channel.pixel_data[i].w);
 	}
 
+	test_channel.pixel_data[0].r = 0x01;
+	test_channel.pixel_data[0].g = 0x00;
+	test_channel.pixel_data[0].b = 0x00;
+	test_channel.pixel_data[0].w = 0xAA;
+
+	test_channel.pixel_data[1].r = 0x00;
+	test_channel.pixel_data[1].g = 0x01;
+	test_channel.pixel_data[1].b = 0x00;
+	test_channel.pixel_data[1].w = 0xAA;
 	test_channel.pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
-	uint8_t pixel_bit = 0;
-	/* test the RMT */
-	for(uint32_t j=0; j<62; j++)
-	{
-		//pixel_bit = (test_channel.pixel_data + j)->data ^ 0x01;
-		pixel_bit ^= 1;
 
-		test_channel.rmt_mem_block[j] = test_channel.pixel_type.pixel_bit[pixel_bit];
-	}
+//	uint8_t pixel_bit = 0;
+//	/* test the RMT */
+//	for(uint32_t j=0; j<62; j++)
+//	{
+//		//pixel_bit = (test_channel.pixel_data + j)->data ^ 0x01;
+//		pixel_bit ^= 1;
+//
+//		test_channel.rmt_mem_block[j] = test_channel.pixel_type.pixel_bit[pixel_bit];
+//	}
 
-	test_channel.rmt_mem_block[62] = test_channel.pixel_type.pixel_bit[PIXEL_BIT_RESET];
+	test_channel.counters.pixel_counter = 0;
+	test_channel.counters.rmt_counter = 0;
+	test_channel.counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
+
+	test_channel.rmt_mem_block[test_channel.counters.rmt_counter] = test_channel.pixel_type.pixel_bit[PIXEL_BIT_RESET];
+	test_channel.counters.rmt_counter++;
+	pixel_send_data(&test_channel);
+
+
+
 	printf("rmt starting at address %p \n", test_channel.rmt_mem_block);
+	vTaskDelay(1000);
 	rmt_tx_start(test_channel.rmt_channel, true);
 
 	printf("rmt started\n");
@@ -87,7 +107,10 @@ void app_main(void)
 
 
     /* loop */
-    for(;;){}
+    for(;;){
+    	vTaskDelay(100);
+
+    }
 
 
 
