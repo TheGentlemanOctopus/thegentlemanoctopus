@@ -47,7 +47,6 @@ typedef enum {
 typedef enum {
 	PIXEL_BIT_lOW=0,
 	PIXEL_BIT_HIGH,
-	PIXEL_BIT_RESET,
 	PIXEL_BIT_MAX
 } pixel_bit_type;
 
@@ -66,6 +65,7 @@ typedef union {
 typedef struct {
 	rmt_item32_t pixel_bit[PIXEL_BIT_MAX]; /* Store for the 1 & 0 and reset RMT data */
 	uint8_t colour_num; /* Number of colours in pixel eg, 3 for rgb 4 for rgbw */
+	uint16_t reset :15;
 } pixel_type_t;
 
 typedef struct {
@@ -83,12 +83,13 @@ typedef struct {
 	uint32_t channel_length; /* Number of pixels on channel*/
 	pixel_data_t* pixel_data; /* Pointer to pixel data */
 	pixel_type_t pixel_type; /* Pixel types, eg WS2812 */
-	pixel_counter_t counters;
+	pixel_counter_t counters; /* Counters for the pixel to RMT conversions */
 } pixel_channel_config_t;
 
 /* Definitions of pixels */
 extern const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX];
 
+void pixel_init_channel(pixel_channel_config_t* channel);
 void pixel_init_rmt_channel(pixel_channel_config_t* channel);
 void pixel_create_data_buffer(pixel_channel_config_t* channel);
 void pixel_delete_data_buffer(pixel_channel_config_t* channel);
