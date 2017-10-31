@@ -18,7 +18,7 @@
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
-#define PIXEL_BIT_MASK_INIT 0x01
+#define PIXEL_BIT_MASK_INIT 0x80000000
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -53,10 +53,11 @@ typedef enum {
 
 typedef union {
 	struct {
-		uint8_t g;
-		uint8_t	r;
-		uint8_t	b;
 		uint8_t	w;
+		uint8_t	b;
+		uint8_t	r;
+		uint8_t g;
+
 	};
 
 	uint32_t data;

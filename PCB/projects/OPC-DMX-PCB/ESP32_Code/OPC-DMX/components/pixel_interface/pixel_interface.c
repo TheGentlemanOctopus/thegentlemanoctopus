@@ -33,7 +33,6 @@ const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
 
 void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 {
-	periph_module_enable(PERIPH_RMT_MODULE);
 
 	rmt_config_t rmt_parameters;
 
@@ -48,15 +47,15 @@ void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 	rmt_parameters.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
 
 	/* initialise the RMT with settings above */
-
 	rmt_config(&rmt_parameters);
-	rmt_set_tx_loop_mode(channel->rmt_channel, true);
 	rmt_tx_stop(channel->rmt_channel);
+	rmt_set_tx_loop_mode(channel->rmt_channel, false);
 
 	/* Allocate buffer for the RMT data */
 	channel->rmt_mem_block = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel];
 	/* Set block to zeroes */
 	memset(channel->rmt_mem_block, 0 , sizeof(rmt_item32_t)*RMT_MEM_BLOCK_SIZE);
+
 }
 
 void pixel_create_data_buffer(pixel_channel_config_t* channel)
@@ -89,11 +88,17 @@ void pixel_send_data(pixel_channel_config_t* channel)
 		for(	; (channel->counters.bit_counter < CHAR_BIT * channel->pixel_type.colour_num) && (channel->counters.rmt_counter < channel->counters.rmt_block_max-1);
 				channel->counters.bit_counter++, channel->counters.rmt_counter++)
 		{
-			pixel_bit = temp_pixel & pixel_bit_mask;
-			//printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, temp_pixel);
-			//printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+			if (temp_pixel & pixel_bit_mask)
+			{
+				pixel_bit = 1;
+			} else {
+				pixel_bit = 0;
+			}
+
+			printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, temp_pixel);
+			printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
 			channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
-			temp_pixel >>= 1;
+			temp_pixel <<= 1;
 		}
 
 //		if (channel->counters.rmt_counter >= channel->counters.rmt_block_max)
