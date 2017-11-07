@@ -36,13 +36,6 @@ void pixel_init_channel(pixel_channel_config_t* channel)
 	/* Create a data buffer for the pixel RGB data */
 	pixel_create_data_buffer(channel);
 
-	/* Set channel counters to 0 */
-	channel->counters.bit_counter = 0;
-	channel->counters.pixel_counter = 0;
-	channel->counters.rmt_counter = 0;
-
-	/* Set the rmt block to max to the RMT block size so it fills the whole buffer on the first run */
-	channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 }
 
 void pixel_init_rmt_channel(pixel_channel_config_t* channel)
@@ -63,13 +56,16 @@ void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 
 	/* Initialise the RMT with settings above */
 	rmt_config(&rmt_parameters);
+	/* Reset the memory index */
+	rmt_memory_rw_rst(channel->rmt_channel);
 	/* Stop the channel from streaming out data prematurely */
 	rmt_tx_stop(channel->rmt_channel);
+	/* Enable wrap around mode for continuous sending */
+	RMT.apb_conf.mem_tx_wrap_en = true;
 	/* This also needs to be set to false... */
 	rmt_set_tx_loop_mode(channel->rmt_channel, false);
-
 	/* Allocate buffer for the RMT data */
-	channel->rmt_mem_block = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel];
+	channel->rmt_mem_block = (rmt_item32_t*) &RMTMEM.chan[channel->rmt_channel].data32;
 	/* Set block to zeroes */
 	memset(channel->rmt_mem_block, 0 , sizeof(rmt_item32_t)*RMT_MEM_BLOCK_SIZE);
 
@@ -90,6 +86,30 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel)
 	channel->pixel_data = NULL;
 }
 
+void pixel_start_channel(pixel_channel_config_t* channel)
+{
+	/* Set channel counters to 0 */
+	channel->counters.bit_counter = 0;
+	channel->counters.pixel_counter = 0;
+	channel->counters.rmt_counter = 0;
+
+	/* Set the rmt block to max to the RMT block size so it fills the whole buffer on the first run */
+	channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
+
+	/* Load the first 64 bits of the pixels into the RMT memory */
+	pixel_send_data(channel);
+
+	rmt_set_tx_thr_intr_en(channel->rmt_channel, true, RMT_MEM_BLOCK_SIZE/2);
+	/* Tie channel threshold interrupt to the TX threshold handler function */
+	esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, channel, NULL);
+	/* Start continuously sending out the RMT data */
+	rmt_set_tx_loop_mode(channel->rmt_channel, true);
+}
+
+static IRAM_ATTR void pixel_intr_handler(void* arg)
+{
+	//pixel_send_data(arg);
+}
 void pixel_send_data(pixel_channel_config_t* channel)
 {
 	/* This function will be used to write pixel data into the RMT buffer */
@@ -113,20 +133,19 @@ void pixel_send_data(pixel_channel_config_t* channel)
 				channel->counters.bit_counter++, channel->counters.rmt_counter++)
 		{
 			/* Bitwise logic for checking if the current bit is a 1 or a 0 */
-			if (temp_pixel_data & pixel_bit_mask)
-			{
-				pixel_bit = 1;
-			} else {
-				pixel_bit = 0;
-			}
+			pixel_bit = ((temp_pixel_data >> 31) & pixel_bit_mask);
 
 			/* Debug stuff */
 
-			printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, temp_pixel_data);
-			printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+			//printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, temp_pixel_data);
+			//printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
 
 			/* load RMT memory block with the bit data */
 			channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
+
+			//printf("RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
+
+
 			/* Shift temp data along for next bit next iteration*/
 			temp_pixel_data <<= 1;
 		}
@@ -148,7 +167,7 @@ void pixel_send_data(pixel_channel_config_t* channel)
 			} else {
 				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 			}
-			printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+			//printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
 
 			/* Break out of the loop  to avoid overflowing the buffer */
 			break;
@@ -168,5 +187,7 @@ void pixel_send_data(pixel_channel_config_t* channel)
 			/* Stretch out the last bit in the pixel rmt buffer */
 			channel->rmt_mem_block[channel->counters.rmt_counter-1].duration1 = channel->pixel_type.reset;
 		}
+		/* Zero pixel counter to start sending all over again */
+		channel->counters.pixel_counter = 0;
 	}
 }

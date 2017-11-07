@@ -30,11 +30,6 @@ esp_err_t pixel_test_init(void)
 	test_channel.pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
 
 	pixel_init_channel(&test_channel);
-//	pixel_init_rmt_channel(&test_channel);
-//
-//	printf("rmt initialised\n");
-//
-//	pixel_create_data_buffer(&test_channel);
 
 	test_channel.pixel_data[0].r = 0x01;
 	test_channel.pixel_data[0].g = 0x00;
@@ -43,23 +38,20 @@ esp_err_t pixel_test_init(void)
 
 	test_channel.pixel_data[1].r = 0x00;
 	test_channel.pixel_data[1].g = 0x01;
-	test_channel.pixel_data[1].b = 0x04;
+	test_channel.pixel_data[1].b = 0x00;
 	test_channel.pixel_data[1].w = 0x00;
 
-	test_channel.pixel_data[2].r = 0x01;
-	test_channel.pixel_data[2].g = 0x01;
+	test_channel.pixel_data[2].r = 0x00;
+	test_channel.pixel_data[2].g = 0x00;
 	test_channel.pixel_data[2].b = 0x01;
 	test_channel.pixel_data[2].w = 0x00;
 
-	pixel_send_data(&test_channel);
+
 
 	printf("rmt starting at address %p \n", test_channel.rmt_mem_block);
 	vTaskDelay(2000);
 
-	rmt_set_tx_loop_mode(test_channel.rmt_channel, true);
-
-	rmt_tx_start(test_channel.rmt_channel, true);
-
+	pixel_start_channel(&test_channel);
 
 	printf("rmt started\n");
 

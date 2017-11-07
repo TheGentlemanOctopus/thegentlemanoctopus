@@ -12,13 +12,13 @@
 
 
 #define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
-#define RMT_MEM_BLOCK_SIZE 64 /* 32x32bit data per block (fill half a block at a time) */
+#define RMT_MEM_BLOCK_SIZE 64/* For some reason the max it can do with loop around mode is 62... No idea why?? */
 
 #define RMT_DIVIDER 2 /* Divide the RMT APB clock by this */
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
-#define PIXEL_BIT_MASK_INIT 0x80000000
+#define PIXEL_BIT_MASK_INIT 0x00000001
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -96,5 +96,7 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel);
 void pixel_start_channel(pixel_channel_config_t* channel);
 void pixel_stop_channel(pixel_channel_config_t* channel);
 void pixel_send_data(pixel_channel_config_t* channel);
+
+static IRAM_ATTR void pixel_intr_handler(void* arg);
 
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */
