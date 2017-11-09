@@ -18,7 +18,7 @@
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
-#define PIXEL_BIT_MASK_INIT 0x00000001
+#define PIXEL_BIT_MASK_INIT 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
@@ -50,31 +50,35 @@ typedef enum {
 	PIXEL_BIT_MAX
 } pixel_bit_type;
 
+/* Structure of pixel data, grbw backwards as neopixels are msb first */
 typedef union {
 	struct {
-		uint8_t	w;
-		uint8_t	b;
-		uint8_t	r;
-		uint8_t g;
-
+		uint8_t	w; /* White */
+		uint8_t	b; /* Blue */
+		uint8_t	r; /* Red */
+		uint8_t g; /* Green */
 	};
 
 	uint32_t data;
 } pixel_data_t;
 
+/* Structure of pixels, for modularity between different manufacturers */
 typedef struct {
 	rmt_item32_t pixel_bit[PIXEL_BIT_MAX]; /* Store for the 1 & 0 and reset RMT data */
 	uint8_t colour_num; /* Number of colours in pixel eg, 3 for rgb 4 for rgbw */
 	uint16_t reset :15;
 } pixel_type_t;
 
+/* Structure of counters used to convert from pixel data to RMT*/
 typedef struct {
-	uint32_t rmt_counter;
-	uint8_t rmt_block_max;
-	uint32_t pixel_counter;
-	uint32_t bit_counter;
+	uint32_t rmt_counter; /* Counter for position in the RMT memory block */
+	uint8_t rmt_block_max; /* Maximum the RMT block can get to before break needs to happen */
+	uint32_t pixel_counter; /* Counter for individual pixels in channel */
+	uint32_t bit_counter; /* Counter for individual bits in the temp pixel data */
+	uint32_t temp_pixel_data; /* Temporary store for the pixel to be sent */
 } pixel_counter_t;
 
+/* Structure of an individual pixel channel */
 typedef struct {
 	pixel_channel_t pixel_channel; /* Name of pixel channel*/
 	rmt_channel_t rmt_channel; /* RMT channel to use for outputting the pixel data*/

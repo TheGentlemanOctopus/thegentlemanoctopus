@@ -101,14 +101,20 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 
 	rmt_set_tx_thr_intr_en(channel->rmt_channel, true, RMT_MEM_BLOCK_SIZE/2);
 	/* Tie channel threshold interrupt to the TX threshold handler function */
-	esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, channel, NULL);
+	//esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, channel, NULL);
 	/* Start continuously sending out the RMT data */
 	rmt_set_tx_loop_mode(channel->rmt_channel, true);
+
+	for (;;)
+	{
+		printf("in pixels\n");
+		vTaskDelay(10);
+	}
 }
 
 static IRAM_ATTR void pixel_intr_handler(void* arg)
 {
-	//pixel_send_data(arg);
+
 }
 void pixel_send_data(pixel_channel_config_t* channel)
 {
@@ -118,39 +124,37 @@ void pixel_send_data(pixel_channel_config_t* channel)
 	uint8_t pixel_bit;
 	/* Mask for the pixel data */
 	uint32_t pixel_bit_mask = PIXEL_BIT_MASK_INIT;
-	/* Temporary store for the pixel to be sent */
-	uint32_t temp_pixel_data = 0;
 
 	/* For loop pixels in the channel length */
 	for(; channel->counters.pixel_counter < channel->channel_length;
 			channel->counters.pixel_counter++)
 	{
-		/* Copy the pixel data to the temp store */
-		temp_pixel_data = channel->pixel_data[channel->counters.pixel_counter].data;
+		/* Copy the pixel data to the temp store, bit shift in case RMT counter broke loop*/
+		channel->counters.temp_pixel_data = channel->pixel_data[channel->counters.pixel_counter].data << channel->counters.bit_counter;
 
 		/* For loop for RMT buffer loading, exits either when at the end of the pixel data (will do RGB or RGBW depending on the pixel type), or the RMT buffer is full */
 		for(	; (channel->counters.bit_counter < CHAR_BIT * channel->pixel_type.colour_num) && (channel->counters.rmt_counter < channel->counters.rmt_block_max);
 				channel->counters.bit_counter++, channel->counters.rmt_counter++)
 		{
 			/* Bitwise logic for checking if the current bit is a 1 or a 0 */
-			pixel_bit = ((temp_pixel_data >> 31) & pixel_bit_mask);
+			pixel_bit = ((channel->counters.temp_pixel_data >> 31) & pixel_bit_mask);
 
 			/* Debug stuff */
 
-			//printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, temp_pixel_data);
-			//printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+			printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, channel->counters.temp_pixel_data);
+			printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
 
 			/* load RMT memory block with the bit data */
 			channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
 
-			//printf("RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
+			printf("RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
 
 
 			/* Shift temp data along for next bit next iteration*/
-			temp_pixel_data <<= 1;
+			channel->counters.temp_pixel_data <<= 1;
 		}
 
-		/* If the bit counter caused the loop to break, then zero the bit counter */
+		/* If the bit counter caused the loop to break, then zero the bit counter*/
 		if (channel->counters.bit_counter >= CHAR_BIT * channel->pixel_type.colour_num)
 		{
 			channel->counters.bit_counter = 0;
@@ -162,13 +166,13 @@ void pixel_send_data(pixel_channel_config_t* channel)
 			/* Check what setting the RMT block max is in */
 			if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE)
 			{
+				/* Reset to 0 and set the next iteration to go to half of a block */
 				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE/2;
 				channel->counters.rmt_counter = 0;
 			} else {
+				/* Next iteration will complete the block */
 				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 			}
-			//printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
-
 			/* Break out of the loop  to avoid overflowing the buffer */
 			break;
 		}
