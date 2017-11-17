@@ -27,65 +27,44 @@ esp_err_t pixel_test_init(void)
 
 	test_channel->gpio_output_pin = GPIO_NUM_4;
 	test_channel->rmt_channel = RMT_CHANNEL_0;
-	test_channel->channel_length = 3;
+	test_channel->channel_length = 250;
 	test_channel->pixel_channel = PIXEL_CHANNEL_0;
 	test_channel->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
 
 	pixel_init_channel(test_channel);
 
-	test_channel->pixel_data[0].r = 0x01;
-	test_channel->pixel_data[0].g = 0x00;
-	test_channel->pixel_data[0].b = 0x00;
-	test_channel->pixel_data[0].w = 0x00;
+	for (uint8_t i = 0; i < test_channel->channel_length; i++)
+	{
+		test_channel->pixel_data[i].r = 0x00;
+		test_channel->pixel_data[i].g = 0x00;
+		test_channel->pixel_data[i].b = 0x01;
+	}
 
-	test_channel->pixel_data[1].r = 0x00;
-	test_channel->pixel_data[1].g = 0x01;
-	test_channel->pixel_data[1].b = 0x00;
-	test_channel->pixel_data[1].w = 0x00;
-
-	test_channel->pixel_data[2].r = 0x00;
-	test_channel->pixel_data[2].g = 0x00;
-	test_channel->pixel_data[2].b = 0x01;
-	test_channel->pixel_data[2].w = 0x00;
-
-
-
-	printf("rmt starting at address %p \n", test_channel->rmt_mem_block);
-	vTaskDelay(2000);
-
-	pixel_start_channel(test_channel);
-
-//	TaskHandle_t pixel_channel_0 = NULL;
-//	BaseType_t xReturned;
-//	xReturned = xTaskCreate(&pixel_start_channel, "CHANNEL 0", 100000, test_channel, 1, pixel_channel_0);
+///* second channel */
+//    pixel_channel_config_t* test_channel2;
+//    test_channel2 = malloc(sizeof(pixel_channel_config_t));
 //
-//	printf("xReturned = %d\n", xReturned);
-//	if (xReturned == pdPASS)
+//	test_channel2->gpio_output_pin = GPIO_NUM_5;
+//	test_channel2->rmt_channel = RMT_CHANNEL_1;
+//	test_channel2->channel_length = 250;
+//	test_channel2->pixel_channel = PIXEL_CHANNEL_1;
+//	test_channel2->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
+//
+//	pixel_init_channel(test_channel2);
+//
+//	for (uint8_t i = 0; i < test_channel2->channel_length; i++)
 //	{
-//		printf("rmt started\n");
+//		test_channel2->pixel_data[i].r = 0x00;
+//		test_channel2->pixel_data[i].g = 0x01;
+//		test_channel2->pixel_data[i].b = 0x00;
 //	}
 
+
+
+	pixel_start_channel(test_channel);
+//	pixel_start_channel(test_channel2);
+
 	return ESP_OK;
-}
-
-void test_function_1(void)
-{
-	for (;;)
-	{
-		printf("hello1");
-		vTaskDelay(500);
-
-	}
-}
-
-void test_function_2(void *pvParameter)
-{
-	for (;;)
-	{
-		printf("hello2");
-		vTaskDelay(500);
-
-	}
 }
 
 void app_main(void)
@@ -109,18 +88,10 @@ void app_main(void)
 
 	pixel_test_init();
 
-//    xTaskCreate(test_function_2,"TASK2", 10000, NULL, 1, NULL);
-//
-//    xTaskCreate(test_function_1,"TASK1", 10000, NULL, 1, NULL);
-    for(;;)
-    {
-    		vTaskDelay(1);
-    }
-
-
-
-
-
+	while(1)
+	{
+		vTaskDelay(100);
+	}
 
 }
 

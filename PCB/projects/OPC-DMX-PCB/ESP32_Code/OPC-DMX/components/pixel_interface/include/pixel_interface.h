@@ -18,7 +18,7 @@
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
-#define PIXEL_BIT_MASK_INIT 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
+#define PIXEL_BIT_MASK 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */

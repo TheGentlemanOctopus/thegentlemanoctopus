@@ -19,6 +19,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#include "esp_log.h"
+
+/* Tag for log messages */
+static const char* PIXEL_TAG = "pixel";
+
+/* Array of semaphores for rtos calls */
+SemaphoreHandle_t xPixelSemaphore[PIXEL_CHANNEL_MAX];
+
+/* Store of handles for the RMT interrupt handler. Should be indexed by the pixel channels RMT_channel number*/
+pixel_channel_config_t* pixel_rmt_handles[RMT_CHANNEL_MAX];
+
 /* Definitions of pixels */
 const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
 	[PIXEL_WS2812_V1] = {
@@ -36,6 +48,7 @@ void pixel_init_channel(pixel_channel_config_t* channel)
 	/* Create a data buffer for the pixel RGB data */
 	pixel_create_data_buffer(channel);
 
+	ESP_LOGD(PIXEL_TAG, "RMT starting at address %p \n", channel->rmt_mem_block);
 }
 
 void pixel_init_rmt_channel(pixel_channel_config_t* channel)
@@ -43,7 +56,7 @@ void pixel_init_rmt_channel(pixel_channel_config_t* channel)
 
 	rmt_config_t rmt_parameters;
 
-	/* Load with the desired settings for pixel sending */
+	/* Load with the desired settings for pixel RMT sending */
 	rmt_parameters.channel = channel->rmt_channel;
 	rmt_parameters.clk_div = RMT_DIVIDER;
 	rmt_parameters.gpio_num = channel->gpio_output_pin;
@@ -88,6 +101,7 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel)
 
 void pixel_start_channel(pixel_channel_config_t* channel)
 {
+	ESP_LOGD(PIXEL_TAG,"in pixel channel %d\n", channel->pixel_channel);
 	/* Set channel counters to 0 */
 	channel->counters.bit_counter = 0;
 	channel->counters.pixel_counter = 0;
@@ -96,34 +110,71 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 	/* Set the rmt block to max to the RMT block size so it fills the whole buffer on the first run */
 	channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 
-	/* Load the first 64 bits of the pixels into the RMT memory */
+	/* Load the pixel_handles global with the location of the channel handle,
+	 * indexed by the RMT channel number as it will be used by the RMT interrupt*/
+	pixel_rmt_handles[channel->rmt_channel] = channel;
+
 	pixel_send_data(channel);
 
+//	/* Load the first 64 bits of the pixels into the RMT memory */
+//	do {
+//		pixel_send_data(channel);
+//		/* If the RMT counter is 0 then it's already filled up the buffer so no need to do it again*/
+//		if (channel->counters.rmt_counter == 0)
+//		{
+//			break;
+//		}
+//	} while (channel->counters.rmt_counter < channel->counters.rmt_block_max);
+
+//	for(uint8_t i = 0; i<6; i++)
+//	{
+//		/* TEST Try it again, see what happens*/
+//		ESP_LOGD(PIXEL_TAG,"Test fill #%d", i);
+//		pixel_send_data(channel);
+//		//vTaskDelay(1000/portTICK_PERIOD_MS);
+//	}
+
+	vTaskDelay(1000/portTICK_PERIOD_MS);
+
+	rmt_set_tx_intr_en(channel->rmt_channel, true);
 	rmt_set_tx_thr_intr_en(channel->rmt_channel, true, RMT_MEM_BLOCK_SIZE/2);
 	/* Tie channel threshold interrupt to the TX threshold handler function */
-	//esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, channel, NULL);
+	esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, channel, NULL);
 	/* Start continuously sending out the RMT data */
 	rmt_set_tx_loop_mode(channel->rmt_channel, true);
 
-	for (;;)
-	{
-		printf("in pixels\n");
-		vTaskDelay(10);
-	}
 }
 
 static IRAM_ATTR void pixel_intr_handler(void* arg)
 {
+	uint8_t int_index;
+	for(int_index = 0; int_index < RMT_CHANNEL_MAX; int_index++)
+	{
+		/* Check for the tx_thr_events */
+		if (RMT.int_st.val &= BIT((int_index + 24)))
+		{
+			/* Clear interrupts */
+			RMT.int_clr.val |= BIT((int_index + 24));
+			break;
+		}  else if (RMT.int_st.val &= BIT((int_index * 3))) /* Check for the tx_thr_events */
+		{
+			/* Clear interrupts */
+			RMT.int_clr.val |= BIT((int_index * 3));
+			break;
+		}
+	}
 
+	/* Send the next half of the data */
+	pixel_send_data(pixel_rmt_handles[int_index]);
 }
-void pixel_send_data(pixel_channel_config_t* channel)
+
+
+IRAM_ATTR void pixel_send_data(pixel_channel_config_t* channel)
 {
 	/* This function will be used to write pixel data into the RMT buffer */
 
 	/* Bit to index the RGB to RMT data */
 	uint8_t pixel_bit;
-	/* Mask for the pixel data */
-	uint32_t pixel_bit_mask = PIXEL_BIT_MASK_INIT;
 
 	/* For loop pixels in the channel length */
 	for(; channel->counters.pixel_counter < channel->channel_length;
@@ -137,18 +188,17 @@ void pixel_send_data(pixel_channel_config_t* channel)
 				channel->counters.bit_counter++, channel->counters.rmt_counter++)
 		{
 			/* Bitwise logic for checking if the current bit is a 1 or a 0 */
-			pixel_bit = ((channel->counters.temp_pixel_data >> 31) & pixel_bit_mask);
+			pixel_bit = ((channel->counters.temp_pixel_data >> 31) & PIXEL_BIT_MASK);
 
 			/* Debug stuff */
 
-			printf("pixel_bit = %d temp_pixel = %08x\n", pixel_bit, channel->counters.temp_pixel_data);
-			printf("Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+			ESP_LOGV(PIXEL_TAG,"pixel_bit = %d temp_pixel = %08x\n", pixel_bit, channel->counters.temp_pixel_data);
+			ESP_LOGV(PIXEL_TAG,"Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
 
 			/* load RMT memory block with the bit data */
 			channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
 
-			printf("RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
-
+			ESP_LOGV(PIXEL_TAG,"RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
 
 			/* Shift temp data along for next bit next iteration*/
 			channel->counters.temp_pixel_data <<= 1;
@@ -173,6 +223,12 @@ void pixel_send_data(pixel_channel_config_t* channel)
 				/* Next iteration will complete the block */
 				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 			}
+
+			/* If the bit counter is zeroed then we are at the end of the pixel, so we need to increment pixel counter before breaking */
+			if (channel->counters.bit_counter == 0)
+			{
+				channel->counters.pixel_counter++;
+			}
 			/* Break out of the loop  to avoid overflowing the buffer */
 			break;
 		}
@@ -182,7 +238,9 @@ void pixel_send_data(pixel_channel_config_t* channel)
 	/* If at the end of the pixel channel then send the reset pulse */
 	if (channel->counters.pixel_counter >= channel->channel_length)
 	{
-		/* Catch for underflow if pixel channel ends on a 0*/
+		ESP_LOGV(PIXEL_TAG,"Reset Pulse");
+		ESP_LOGV(PIXEL_TAG,"Pixel counter = %d Bit counter = %d RMT counter = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter);
+		/* Catch for underflow if pixel channel ends on rmt overflow*/
 		if (channel->counters.rmt_counter == 0)
 		{
 			/* Stretch out the last bit in the pixel rmt buffer */
@@ -191,7 +249,7 @@ void pixel_send_data(pixel_channel_config_t* channel)
 			/* Stretch out the last bit in the pixel rmt buffer */
 			channel->rmt_mem_block[channel->counters.rmt_counter-1].duration1 = channel->pixel_type.reset;
 		}
-		/* Zero pixel counter to start sending all over again */
+		/* Zero pixel counters to start sending all over again */
 		channel->counters.pixel_counter = 0;
 	}
 }
