@@ -27,7 +27,7 @@ esp_err_t pixel_test_init(void)
 
 	test_channel->gpio_output_pin = GPIO_NUM_4;
 	test_channel->rmt_channel = RMT_CHANNEL_0;
-	test_channel->channel_length = 250;
+	test_channel->channel_length = 7;
 	test_channel->pixel_channel = PIXEL_CHANNEL_0;
 	test_channel->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
 
@@ -35,34 +35,48 @@ esp_err_t pixel_test_init(void)
 
 	for (uint8_t i = 0; i < test_channel->channel_length; i++)
 	{
-		test_channel->pixel_data[i].r = 0x00;
+		test_channel->pixel_data[i].r = 0x01;
 		test_channel->pixel_data[i].g = 0x00;
 		test_channel->pixel_data[i].b = 0x01;
 	}
 
-///* second channel */
-//    pixel_channel_config_t* test_channel2;
-//    test_channel2 = malloc(sizeof(pixel_channel_config_t));
-//
-//	test_channel2->gpio_output_pin = GPIO_NUM_5;
-//	test_channel2->rmt_channel = RMT_CHANNEL_1;
-//	test_channel2->channel_length = 250;
-//	test_channel2->pixel_channel = PIXEL_CHANNEL_1;
-//	test_channel2->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
-//
-//	pixel_init_channel(test_channel2);
-//
-//	for (uint8_t i = 0; i < test_channel2->channel_length; i++)
-//	{
-//		test_channel2->pixel_data[i].r = 0x00;
-//		test_channel2->pixel_data[i].g = 0x01;
-//		test_channel2->pixel_data[i].b = 0x00;
-//	}
+/* second channel */
+    pixel_channel_config_t* test_channel2;
+    test_channel2 = malloc(sizeof(pixel_channel_config_t));
+
+	test_channel2->gpio_output_pin = GPIO_NUM_5;
+	test_channel2->rmt_channel = RMT_CHANNEL_1;
+	test_channel2->channel_length = 5000;
+	test_channel2->pixel_channel = PIXEL_CHANNEL_1;
+	test_channel2->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
+
+	pixel_init_channel(test_channel2);
+
+	for (uint32_t i = 0; i < test_channel2->channel_length; i++)
+	{
+		test_channel2->pixel_data[i].r = 0x00;
+		test_channel2->pixel_data[i].g = 0x01;
+		test_channel2->pixel_data[i].b = 0x00;
+	}
 
 
 
 	pixel_start_channel(test_channel);
-//	pixel_start_channel(test_channel2);
+	pixel_start_channel(test_channel2);
+
+
+	while (1){
+
+		for (uint8_t i = 0; i < test_channel->channel_length; i++)
+		{
+			test_channel->pixel_data[i].r += 1;
+			test_channel->pixel_data[i].g += 0;
+			test_channel->pixel_data[i].b += 0;
+		}
+
+		vTaskDelay(10/portTICK_PERIOD_MS);
+
+	}
 
 	return ESP_OK;
 }
