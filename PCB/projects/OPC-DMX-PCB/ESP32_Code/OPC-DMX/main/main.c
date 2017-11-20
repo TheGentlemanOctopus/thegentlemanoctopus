@@ -19,6 +19,32 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+pixel_data_t Wheel(uint8_t WheelPos) {
+
+	pixel_data_t out;
+	WheelPos = 255 - WheelPos;
+	if(WheelPos < 85) {
+		out.r = 255 - WheelPos * 3;
+		out.g =  0;
+		out.b = WheelPos * 3;
+		return out;
+	} else if(WheelPos < 170) {
+		WheelPos -= 85;
+		out.r = 0;
+		out.g = WheelPos * 3;
+		out.b = 255 - WheelPos * 3;
+		return out;
+	} else {
+		WheelPos -= 170;
+		out.r = WheelPos * 3;
+		out.g = 255 - WheelPos * 3;
+		out.b = 0;
+		return out;
+  }
+}
+
 esp_err_t pixel_test_init(void)
 {
 
@@ -46,7 +72,7 @@ esp_err_t pixel_test_init(void)
 
 	test_channel2->gpio_output_pin = GPIO_NUM_5;
 	test_channel2->rmt_channel = RMT_CHANNEL_1;
-	test_channel2->channel_length = 5000;
+	test_channel2->channel_length = 500;
 	test_channel2->pixel_channel = PIXEL_CHANNEL_1;
 	test_channel2->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
 
@@ -67,14 +93,23 @@ esp_err_t pixel_test_init(void)
 
 	while (1){
 
-		for (uint8_t i = 0; i < test_channel->channel_length; i++)
-		{
-			test_channel->pixel_data[i].r += 1;
-			test_channel->pixel_data[i].g += 0;
-			test_channel->pixel_data[i].b += 0;
-		}
+//		for (uint8_t i = 0; i < test_channel->channel_length; i++)
+//		{
+//			test_channel->pixel_data[i].r += 1;
+//			test_channel->pixel_data[i].g += 0;
+//			test_channel->pixel_data[i].b += 0;
+//		}
 
-		vTaskDelay(10/portTICK_PERIOD_MS);
+	    for (int color=0; color<255; color++) {
+	      for (int i=0; i<test_channel2->channel_length; i++) {
+	    	  			test_channel2->pixel_data[i].r = Wheel(color).r;
+	    	  			test_channel2->pixel_data[i].g = Wheel(color).g;
+	    	  			test_channel2->pixel_data[i].b = Wheel(color).b;
+	       }
+			vTaskDelay(10/portTICK_PERIOD_MS);
+	    }
+
+
 
 	}
 

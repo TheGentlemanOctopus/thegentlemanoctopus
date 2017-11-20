@@ -1,8 +1,13 @@
 /*
  * pixel_interface.c
  *
- *  Created on: 20 Sep 2017
- *      Author: Ben Holden
+ * @brief Pixel Interface Using the ESP32's RMT module.
+ *
+ *
+ *  	Created on: 20 Sep 2017
+ *  	Author: Ben Holden
+ *  The Gentleman Octopus Ltd
+ *
  */
 
 #include "freertos/FreeRTOS.h"
@@ -24,9 +29,6 @@
 
 /* Tag for log messages */
 static const char* PIXEL_TAG = "pixel";
-
-/* Array of semaphores for rtos calls */
-SemaphoreHandle_t xPixelSemaphore[PIXEL_CHANNEL_MAX];
 
 /* Store of handles for the RMT interrupt handler. Should be indexed by the pixel channels RMT_channel number*/
 pixel_channel_config_t* pixel_rmt_handles[RMT_CHANNEL_MAX];
@@ -107,10 +109,10 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 {
 
 	/* Debug pin outputs*/
-    gpio_pad_select_gpio(GPIO_NUM_27);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(GPIO_NUM_27, GPIO_MODE_OUTPUT);
-    gpio_set_level(GPIO_NUM_27, 0);
+	gpio_pad_select_gpio(GPIO_NUM_27);
+	/* Set the GPIO as a push/pull output */
+	gpio_set_direction(GPIO_NUM_27, GPIO_MODE_OUTPUT);
+	gpio_set_level(GPIO_NUM_27, 0);
 
 	ESP_LOGD(PIXEL_TAG,"in pixel channel %d\n", channel->pixel_channel);
 
@@ -146,7 +148,7 @@ IRAM_ATTR void pixel_intr_handler(void* arg)
 	static uint8_t tx_thr_stat = 0;
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
-    gpio_set_level(GPIO_NUM_27, tx_thr_stat);
+	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
 
 	for(int_index = 0; int_index < RMT_CHANNEL_MAX; int_index++)
 	{
@@ -163,7 +165,7 @@ IRAM_ATTR void pixel_intr_handler(void* arg)
 
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
-    gpio_set_level(GPIO_NUM_27, tx_thr_stat);
+	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
 }
 
 
@@ -242,7 +244,7 @@ IRAM_ATTR void pixel_send_data(pixel_channel_config_t* channel)
 				/* Next iteration will complete the block */
 				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 			}
-			/* Break out of the loop  to avoid overflowing the buffer */
+			/* Break out of the loop to avoid overflowing the buffer */
 			break;
 		}
 
