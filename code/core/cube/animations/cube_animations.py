@@ -2,7 +2,6 @@ import numpy as np
 import datetime
 
 from core.cube.layout.panel import Panel
-
 from core.master.animation import Cube_animation
 
 def map_range(value, OldMin, OldMax, NewMin,NewMax):
