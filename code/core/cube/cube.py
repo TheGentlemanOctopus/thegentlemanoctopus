@@ -7,7 +7,8 @@ from core.audioAnalysis.fft import Fft
 from core.cube.layout.panel import Panel
 
 from core.master.device import Device
-import core.master.animation as animation
+# import core.master.animation as animation
+import core.cube.animations.cube_animations as animation
 import core.opc.opc as opc
 
 
