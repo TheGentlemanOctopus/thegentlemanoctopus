@@ -6,7 +6,7 @@ WORK IN PROCESS FOR 2017
 
 Welcome to the octopus show! 
 
-Software runs three processes in parallel:
+Software runs three progesses in parallel:
 
 1. OPC Server. Either LEDSCAPE on the beaglebone or the openGL simulator at home.
 2. Pattern Generator. Generates RGB data and sends to an opc server over TCP
