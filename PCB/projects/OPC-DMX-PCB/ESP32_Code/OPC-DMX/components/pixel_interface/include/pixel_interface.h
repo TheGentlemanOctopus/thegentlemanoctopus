@@ -21,6 +21,9 @@
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
 #define PIXEL_BIT_MASK 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
+/**
+ * Enums
+ */
 
 /**
  * @brief Pixel Channel types
@@ -62,6 +65,10 @@ typedef enum {
 	PIXEL_BIT_HIGH,
 	PIXEL_BIT_MAX
 } pixel_bit_type;
+
+/**
+ * Structures
+ */
 
 /**
  * @brief Pixel Data types
@@ -119,6 +126,10 @@ typedef struct {
 } pixel_channel_config_t;
 
 /**
+ * Public Variables
+ */
+
+/**
  * @brief Pixel Type Lookup
  * Definitions of pixels saved in an array of pixel_type_t to be,
  * copied across on pixel channel initialisation, depending on the user requirements.
@@ -126,9 +137,28 @@ typedef struct {
 extern const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX];
 
 /**
+ * Public Functions
+ */
+
+/**
+ * @brief Pixel Generate Channel Conf
+ * Allocates memory for and sets up a pixel_channel_config_t structure with the parameters sent
+ *
+ * @param pixel_channel Number of the pixel channel to generate (0-7)
+ *
+ * @param channel_length Number of pixels in channel
+ *
+ * @param pixel_type Type of pixels to be used on channel
+ *
+ * @return Pointer to the generated structure
+ */
+pixel_channel_config_t* pixel_generate_channel_conf(pixel_channel_t pixel_channel, uint32_t channel_length, pixel_name_t pixel_type);
+
+/**
  * @brief Pixel Init Channel
  * Initialises the required RMT channel
  * and creates the data buffer for RGB data
+ *
  * @param channel Pixel channel config structure
  */
 void pixel_init_channel(pixel_channel_config_t* channel);

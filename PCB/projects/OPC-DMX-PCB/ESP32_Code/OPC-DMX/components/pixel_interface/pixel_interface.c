@@ -33,7 +33,10 @@ static const char* PIXEL_TAG = "pixel";
 /* Store of handles for the RMT interrupt handler. Should be indexed by the pixel channels RMT_channel number*/
 pixel_channel_config_t* pixel_rmt_handles[RMT_CHANNEL_MAX];
 
-/* Definitions of pixels */
+/**
+ * Definitions of the type of pixels from various datasheets.
+ * Indexed by the pixel_name_t enum in pixel_interface.h
+ */
 const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
 	[PIXEL_WS2812_V1] = {
 			.pixel_bit[PIXEL_BIT_lOW] = { .level0 = 1, .duration0 = 350/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 800/RMT_CLK_DIVIDER},
@@ -42,6 +45,40 @@ const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
 			.colour_num = 3
 	}
 };
+
+/**
+ * Definitions of the GPIO pins for each pixel channel
+ * Should be changed depending on users needs.
+ */
+const gpio_num_t pixel_gpio[PIXEL_CHANNEL_MAX] = {
+		[PIXEL_CHANNEL_0] = GPIO_NUM_2,
+		[PIXEL_CHANNEL_1] = GPIO_NUM_5,
+		[PIXEL_CHANNEL_2] = GPIO_NUM_4,
+		[PIXEL_CHANNEL_3] = GPIO_NUM_19,
+		[PIXEL_CHANNEL_4] = GPIO_NUM_18,
+		[PIXEL_CHANNEL_5] = GPIO_NUM_22,
+		[PIXEL_CHANNEL_6] = GPIO_NUM_21,
+		[PIXEL_CHANNEL_7] = GPIO_NUM_23
+};
+
+
+pixel_channel_config_t* pixel_generate_channel_conf(pixel_channel_t pixel_channel, uint32_t channel_length, pixel_name_t pixel_type)
+{
+	pixel_channel_config_t* channel;
+	/* Allocate memory for the structure */
+	channel = malloc(sizeof(pixel_channel_config_t));
+
+	channel->pixel_channel = pixel_channel;
+	channel->gpio_output_pin = pixel_gpio[pixel_channel];
+	/* To avoid confusion RMT channel is the same number as the pixel channel*/
+	channel->rmt_channel = (rmt_channel_t)pixel_channel;
+	channel->channel_length = channel_length;
+
+	channel->pixel_type = pixel_type_lookup[pixel_type];
+
+	return channel;
+}
+
 
 void pixel_init_channel(pixel_channel_config_t* channel)
 {

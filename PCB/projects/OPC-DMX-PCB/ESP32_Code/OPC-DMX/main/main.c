@@ -48,63 +48,35 @@ pixel_data_t Wheel(uint8_t WheelPos) {
 esp_err_t pixel_test_init(void)
 {
 
-    pixel_channel_config_t* test_channel;
-    test_channel = malloc(sizeof(pixel_channel_config_t));
-
-	test_channel->gpio_output_pin = GPIO_NUM_4;
-	test_channel->rmt_channel = RMT_CHANNEL_0;
-	test_channel->channel_length = 7;
-	test_channel->pixel_channel = PIXEL_CHANNEL_0;
-	test_channel->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
-
-	pixel_init_channel(test_channel);
-
-	for (uint8_t i = 0; i < test_channel->channel_length; i++)
-	{
-		test_channel->pixel_data[i].r = 0x01;
-		test_channel->pixel_data[i].g = 0x00;
-		test_channel->pixel_data[i].b = 0x01;
-	}
-
-/* second channel */
-    pixel_channel_config_t* test_channel2;
-    test_channel2 = malloc(sizeof(pixel_channel_config_t));
-
-	test_channel2->gpio_output_pin = GPIO_NUM_5;
-	test_channel2->rmt_channel = RMT_CHANNEL_1;
-	test_channel2->channel_length = 500;
-	test_channel2->pixel_channel = PIXEL_CHANNEL_1;
-	test_channel2->pixel_type = pixel_type_lookup[PIXEL_WS2812_V1];
-
-	pixel_init_channel(test_channel2);
-
-	for (uint32_t i = 0; i < test_channel2->channel_length; i++)
-	{
-		test_channel2->pixel_data[i].r = 0x00;
-		test_channel2->pixel_data[i].g = 0x01;
-		test_channel2->pixel_data[i].b = 0x00;
-	}
+    pixel_channel_config_t* test_channel[PIXEL_CHANNEL_MAX];
 
 
 
-	pixel_start_channel(test_channel);
-	pixel_start_channel(test_channel2);
+    for(pixel_channel_t a = 0; a < 1; a++)
+    {
+    		test_channel[a] = pixel_generate_channel_conf(a, 7, PIXEL_WS2812_V1);
+
+		pixel_init_channel(test_channel[a]);
 
 
+		/* load some dummy data */
+		for (uint8_t i = 0; i < test_channel[a]->channel_length; i++)
+		{
+			test_channel[a]->pixel_data[i].r = 0x00;
+			test_channel[a]->pixel_data[i].g = 0x00;
+			test_channel[a]->pixel_data[i].b = 0x01;
+		}
+		xTaskCreatePinnedToCore(pixel_start_channel, "NAME", 100000, test_channel[a], 0, NULL, 1);
+		//pixel_start_channel(test_channel[a]);
+
+    }
 	while (1){
 
-//		for (uint8_t i = 0; i < test_channel->channel_length; i++)
-//		{
-//			test_channel->pixel_data[i].r += 1;
-//			test_channel->pixel_data[i].g += 0;
-//			test_channel->pixel_data[i].b += 0;
-//		}
-
 	    for (int color=0; color<255; color++) {
-	      for (int i=0; i<test_channel2->channel_length; i++) {
-	    	  			test_channel2->pixel_data[i].r = Wheel(color).r;
-	    	  			test_channel2->pixel_data[i].g = Wheel(color).g;
-	    	  			test_channel2->pixel_data[i].b = Wheel(color).b;
+	      for (int i=0; i<test_channel[1]->channel_length; i++) {
+//	    	  			test_channel->pixel_data[i].r = Wheel(color).r;
+//	    	  			test_channel->pixel_data[i].g = Wheel(color).g;
+//	    	  			test_channel->pixel_data[i].b = Wheel(color).b;
 	       }
 			vTaskDelay(10/portTICK_PERIOD_MS);
 	    }
