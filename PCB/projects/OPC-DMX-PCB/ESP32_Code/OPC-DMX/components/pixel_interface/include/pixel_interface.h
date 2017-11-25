@@ -21,6 +21,8 @@
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
 #define PIXEL_BIT_MASK 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
+
+#define RMT_BUFFER_FULL 0xFF
 /**
  * Enums
  */
@@ -220,7 +222,8 @@ void pixel_stop_channel(pixel_channel_config_t* channel);
  * @param channel Pixel channel config structure
  */
 void pixel_send_data(pixel_channel_config_t* channel);
-
+void pixel_send_data_multi_channel(pixel_channel_config_t** channels, uint8_t* index_queue, uint8_t index_count);
+bool pixel_convert_data(pixel_channel_config_t* channel);
 /**
  * @brief Pixel Intr Handler
  * Deals with the RMT interrupts and figures out what channel to fill next.

@@ -51,10 +51,9 @@ esp_err_t pixel_test_init(void)
     pixel_channel_config_t* test_channel[PIXEL_CHANNEL_MAX];
 
 
-
-    for(pixel_channel_t a = 0; a < 1; a++)
+    for(uint8_t a = 0; a < 7; a++)
     {
-    		test_channel[a] = pixel_generate_channel_conf(a, 7, PIXEL_WS2812_V1);
+    		test_channel[a] = pixel_generate_channel_conf((pixel_channel_t)a, 7, PIXEL_WS2812_V1);
 
 		pixel_init_channel(test_channel[a]);
 
@@ -66,10 +65,20 @@ esp_err_t pixel_test_init(void)
 			test_channel[a]->pixel_data[i].g = 0x00;
 			test_channel[a]->pixel_data[i].b = 0x01;
 		}
-		xTaskCreatePinnedToCore(pixel_start_channel, "NAME", 100000, test_channel[a], 0, NULL, 1);
+
+
+		//xTaskCreatePinnedToCore(pixel_start_channel, "NAME", 100000, test_channel[a], 0, NULL, 1);
 		//pixel_start_channel(test_channel[a]);
 
     }
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 0", 10000, test_channel[0], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 1", 10000, test_channel[1], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 2", 10000, test_channel[2], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 3", 10000, test_channel[3], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 4", 10000, test_channel[4], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 5", 10000, test_channel[5], configMAX_PRIORITIES - 1, NULL,1);
+	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 6", 10000, test_channel[6], configMAX_PRIORITIES - 1, NULL,1);
+//	xTaskCreatePinnedToCore(pixel_start_channel, "CHANNEL 7", 10000, test_channel[7], configMAX_PRIORITIES - 1, NULL,1);
 	while (1){
 
 	    for (int color=0; color<255; color++) {

@@ -29,6 +29,7 @@
 
 /* Tag for log messages */
 static const char* PIXEL_TAG = "pixel";
+SemaphoreHandle_t xPixelSemaphore[PIXEL_CHANNEL_MAX];
 
 /* Store of handles for the RMT interrupt handler. Should be indexed by the pixel channels RMT_channel number*/
 pixel_channel_config_t* pixel_rmt_handles[RMT_CHANNEL_MAX];
@@ -144,7 +145,7 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel)
 
 void pixel_start_channel(pixel_channel_config_t* channel)
 {
-
+	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
 	/* Debug pin outputs*/
 	gpio_pad_select_gpio(GPIO_NUM_27);
 	/* Set the GPIO as a push/pull output */
@@ -177,32 +178,90 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 
 	/* Start continuously sending out the RMT data */
 	rmt_tx_start(channel->rmt_channel, true);
+
+	for(;;)
+	{
+
+	}
 }
 
 IRAM_ATTR void pixel_intr_handler(void* arg)
 {
-	uint8_t int_index;
+	static uint8_t int_index = 0;
+	static uint8_t index_queue[RMT_CHANNEL_MAX];
+	uint8_t index_count = 0;
+	static uint8_t start_index;
 	static uint8_t tx_thr_stat = 0;
+
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
 	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
 
-	for(int_index = 0; int_index < RMT_CHANNEL_MAX; int_index++)
+	start_index = int_index;
+	while(true)
 	{
 		/* Check for the tx_thr_events */
-		if (RMT.int_st.val & BIT((int_index + 24)))
+		if(RMT.int_st.val & BIT((int_index + 24)))
 		{
 			/* Clear interrupts */
 			RMT.int_clr.val |= BIT((int_index + 24));
+			/* Add the channel that set the interrupt to the queue */
+			index_queue[index_count] = int_index;
+			/* Increment the queue index */
+			index_count++;
+//			pixel_send_data(pixel_rmt_handles[int_index]);
+//			break;
+		}
+
+		if(int_index == RMT_CHANNEL_MAX-1)
+		{
+			int_index = 0;
+		} else {
+			int_index++;
+		}
+		if(int_index == start_index)
+		{
 			break;
 		}
 	}
+
 	/* Send the next half of the data */
-	pixel_send_data(pixel_rmt_handles[int_index]);
+	pixel_send_data_multi_channel(pixel_rmt_handles, index_queue, index_count);
+//	pixel_send_data(pixel_rmt_handles[int_index]);
 
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
 	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
+}
+
+IRAM_ATTR void pixel_send_data_multi_channel(pixel_channel_config_t** channels, uint8_t* index_queue, uint8_t index_count)
+{
+	/* This function will be used to write pixel data into the RMT buffer */
+
+	uint8_t chan_index;
+	uint8_t break_limit = 0;
+	/* Unlimited loop for pixels in the channel length */
+	while(true)
+	{
+		/* Send a pixel at a time to each channel that needs data */
+		for(chan_index = 0; chan_index < index_count; chan_index++)
+		{
+			/* 0xFF is the identifier for a channel that's full, only fill those that need it*/
+			if (index_queue[chan_index] != RMT_BUFFER_FULL)
+			{
+				if (!pixel_convert_data(channels[index_queue[chan_index]]))
+				{
+					break_limit++;
+					index_queue[chan_index] = RMT_BUFFER_FULL;
+				}
+			}
+		}
+
+		if (break_limit >= index_count)
+		{
+			break;
+		}
+	}
 }
 
 
@@ -210,81 +269,86 @@ IRAM_ATTR void pixel_send_data(pixel_channel_config_t* channel)
 {
 	/* This function will be used to write pixel data into the RMT buffer */
 
+	/* Unlimited loop for pixels in the channel length */
+	while(pixel_convert_data(channel))
+	{
+
+	}
+}
+
+IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
+{
 	/* Bit to index the RGB to RMT data */
 	uint8_t pixel_bit;
+	/* Copy the pixel data to the temp store, bit shift in case RMT counter broke loop*/
+	channel->counters.temp_pixel_data = channel->pixel_data[channel->counters.pixel_counter].data << channel->counters.bit_counter;
 
-	/* Unlimited loop for pixels in the channel length */
-	while(true)
+	/* For loop for RMT buffer loading, exits either when at the end of the pixel data (will do RGB or RGBW depending on the pixel type), or the RMT buffer is full */
+	for(	; (channel->counters.bit_counter < CHAR_BIT * channel->pixel_type.colour_num) && (channel->counters.rmt_counter < channel->counters.rmt_block_max);
+			channel->counters.bit_counter++, channel->counters.rmt_counter++)
 	{
-		/* Copy the pixel data to the temp store, bit shift in case RMT counter broke loop*/
-		channel->counters.temp_pixel_data = channel->pixel_data[channel->counters.pixel_counter].data << channel->counters.bit_counter;
+		/* Bitwise logic for checking if the current bit is a 1 or a 0 */
+		pixel_bit = ((channel->counters.temp_pixel_data >> 31) & PIXEL_BIT_MASK);
 
-		/* For loop for RMT buffer loading, exits either when at the end of the pixel data (will do RGB or RGBW depending on the pixel type), or the RMT buffer is full */
-		for(	; (channel->counters.bit_counter < CHAR_BIT * channel->pixel_type.colour_num) && (channel->counters.rmt_counter < channel->counters.rmt_block_max);
-				channel->counters.bit_counter++, channel->counters.rmt_counter++)
+		/* Debug stuff */
+
+		//ESP_LOGV(PIXEL_TAG,"pixel_bit = %d temp_pixel = %08x\n", pixel_bit, channel->counters.temp_pixel_data);
+		//ESP_LOGV(PIXEL_TAG,"Pixel counter = %d Bit counter = %d RMT counter = %d RMT max = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter, channel->counters.rmt_block_max);
+
+		/* load RMT memory block with the bit data */
+		channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
+
+		//ESP_LOGV(PIXEL_TAG,"RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
+
+		/* Shift temp data along for next bit next iteration*/
+		channel->counters.temp_pixel_data <<= 1;
+	}
+
+	/* If the bit counter caused the loop to break, then zero the bit counter*/
+	if (channel->counters.bit_counter >= (CHAR_BIT * channel->pixel_type.colour_num))
+	{
+		channel->counters.bit_counter = 0;
+
+		/* If at the end of the pixel channel then send the reset pulse */
+		if (channel->counters.pixel_counter >= channel->channel_length-1)
 		{
-			/* Bitwise logic for checking if the current bit is a 1 or a 0 */
-			pixel_bit = ((channel->counters.temp_pixel_data >> 31) & PIXEL_BIT_MASK);
-
-			/* Debug stuff */
-
-			//ESP_LOGV(PIXEL_TAG,"pixel_bit = %d temp_pixel = %08x\n", pixel_bit, channel->counters.temp_pixel_data);
+			//ESP_LOGV(PIXEL_TAG,"Reset Pulse");
 			//ESP_LOGV(PIXEL_TAG,"Pixel counter = %d Bit counter = %d RMT counter = %d RMT max = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter, channel->counters.rmt_block_max);
-
-			/* load RMT memory block with the bit data */
-			channel->rmt_mem_block[channel->counters.rmt_counter] = channel->pixel_type.pixel_bit[pixel_bit];
-
-			//ESP_LOGV(PIXEL_TAG,"RMT_Data = %08x\n", channel->rmt_mem_block[channel->counters.rmt_counter].val);
-
-			/* Shift temp data along for next bit next iteration*/
-			channel->counters.temp_pixel_data <<= 1;
-		}
-
-		/* If the bit counter caused the loop to break, then zero the bit counter*/
-		if (channel->counters.bit_counter >= (CHAR_BIT * channel->pixel_type.colour_num))
-		{
-			channel->counters.bit_counter = 0;
-
-			/* If at the end of the pixel channel then send the reset pulse */
-			if (channel->counters.pixel_counter >= channel->channel_length-1)
+			/* Catch for underflow if pixel channel ends on rmt overflow*/
+			if (channel->counters.rmt_counter == 0)
 			{
-				//ESP_LOGV(PIXEL_TAG,"Reset Pulse");
-				//ESP_LOGV(PIXEL_TAG,"Pixel counter = %d Bit counter = %d RMT counter = %d RMT max = %d\n",channel->counters.pixel_counter,channel->counters.bit_counter,channel->counters.rmt_counter, channel->counters.rmt_block_max);
-				/* Catch for underflow if pixel channel ends on rmt overflow*/
-				if (channel->counters.rmt_counter == 0)
-				{
-					/* Stretch out the last bit in the pixel rmt buffer */
-					channel->rmt_mem_block[RMT_MEM_BLOCK_SIZE-1].duration1 = channel->pixel_type.reset;
-				} else {
-					/* Stretch out the last bit in the pixel rmt buffer */
-					channel->rmt_mem_block[channel->counters.rmt_counter-1].duration1 = channel->pixel_type.reset;
-				}
-				/* Zero pixel counters to start sending pixels all over again*/
-				channel->counters.pixel_counter = 0;
+				/* Stretch out the last bit in the pixel rmt buffer */
+				channel->rmt_mem_block[RMT_MEM_BLOCK_SIZE-1].duration1 = channel->pixel_type.reset;
 			} else {
-				/* Go to the next pixel, for next iteration of loop */
-				channel->counters.pixel_counter++;
+				/* Stretch out the last bit in the pixel rmt buffer */
+				channel->rmt_mem_block[channel->counters.rmt_counter-1].duration1 = channel->pixel_type.reset;
 			}
-
-		}
-
-		/* If the RMT counter caused the loop to break, then update the RMT_block max for next time */
-		if (channel->counters.rmt_counter >= channel->counters.rmt_block_max)
-		{
-			/* Check what setting the RMT block max is in */
-			if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE)
-			{
-				/* Reset to 0 and set the next iteration to go to half of a block */
-				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE/2;
-				channel->counters.rmt_counter = 0;
-			} else {
-				/* Next iteration will complete the block */
-				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
-			}
-			/* Break out of the loop to avoid overflowing the buffer */
-			break;
+			/* Zero pixel counters to start sending pixels all over again*/
+			channel->counters.pixel_counter = 0;
+		} else {
+			/* Go to the next pixel, for next iteration of loop */
+			channel->counters.pixel_counter++;
 		}
 
 	}
 
+	/* If the RMT counter caused the loop to break, then update the RMT_block max for next time */
+	if (channel->counters.rmt_counter >= channel->counters.rmt_block_max)
+	{
+		/* Check what setting the RMT block max is in */
+		if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE)
+		{
+			/* Reset to 0 and set the next iteration to go to half of a block */
+			channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE/2;
+			channel->counters.rmt_counter = 0;
+		} else {
+			/* Next iteration will complete the block */
+			channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
+		}
+		/* Break out of the loop to avoid overflowing the buffer */
+		return false;
+		//break;
+	}
+	return true;
 }
+
