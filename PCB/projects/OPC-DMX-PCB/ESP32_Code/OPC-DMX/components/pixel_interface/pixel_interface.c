@@ -145,7 +145,6 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel)
 
 void pixel_start_channel(pixel_channel_config_t* channel)
 {
-	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
 	/* Debug pin outputs*/
 	gpio_pad_select_gpio(GPIO_NUM_27);
 	/* Set the GPIO as a push/pull output */
@@ -153,6 +152,18 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 	gpio_set_level(GPIO_NUM_27, 0);
 
 	ESP_LOGD(PIXEL_TAG,"in pixel channel %d\n", channel->pixel_channel);
+
+	/* Tie channel threshold interrupt to the TX threshold handler function */
+	uint32_t bit_mask = BIT((channel->rmt_channel + 24));
+	esp_intr_alloc_intrstatus(ETS_RMT_INTR_SOURCE, ESP_INTR_FLAG_SHARED, (uint32_t)&RMT.int_st.val, bit_mask, pixel_intr_handler_individual, channel, NULL);
+
+	//	esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler_individual, channel, NULL);
+	//	esp_intr_alloc(ETS_RMT_INTR_SOURCE, ESP_INTR_FLAG_LOWMED, pixel_intr_handler, NULL, NULL);
+
+	/* Load the pixel_handles global with the location of the channel handle,
+	 * indexed by the RMT channel number as it will be used by the RMT interrupt*/
+	pixel_rmt_handles[channel->rmt_channel] = channel;
+
 
 	/* Set channel counters to 0 */
 	channel->counters.bit_counter = 0;
@@ -162,17 +173,12 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 	/* Set the rmt block to max to the RMT block size so it fills the whole buffer on the first run */
 	channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
 
-	/* Load the pixel_handles global with the location of the channel handle,
-	 * indexed by the RMT channel number as it will be used by the RMT interrupt*/
-	pixel_rmt_handles[channel->rmt_channel] = channel;
-
 	/* Load first RMT block with data so it's got something to send */
 	pixel_send_data(channel);
 
 	/* Reset the memory index */
 	rmt_memory_rw_rst(channel->rmt_channel);
-	/* Tie channel threshold interrupt to the TX threshold handler function */
-	esp_intr_alloc(ETS_RMT_INTR_SOURCE, 0, pixel_intr_handler, NULL, NULL);
+
 	/* Set and interrupt to fire every half block */
 	rmt_set_tx_thr_intr_en(channel->rmt_channel, true, RMT_MEM_BLOCK_SIZE/2);
 
@@ -182,8 +188,35 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 	for(;;)
 	{
 
+
+
+
+
 	}
 }
+
+IRAM_ATTR void pixel_intr_handler_individual(pixel_channel_config_t* channel)
+{
+	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
+	static uint8_t tx_thr_stat = 0;
+	/* toggle a pin for debug */
+	tx_thr_stat ^= 0x01;
+	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
+
+	RMT.int_clr.val |= BIT((channel->rmt_channel + 24));
+
+	taskENTER_CRITICAL(&myMutex);
+
+	/* Send the next half of the data */
+	pixel_send_data(channel);
+
+	taskEXIT_CRITICAL(&myMutex);
+
+	/* toggle a pin for debug */
+	tx_thr_stat ^= 0x01;
+	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
+}
+
 
 IRAM_ATTR void pixel_intr_handler(void* arg)
 {
@@ -325,6 +358,7 @@ IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
 			}
 			/* Zero pixel counters to start sending pixels all over again*/
 			channel->counters.pixel_counter = 0;
+
 		} else {
 			/* Go to the next pixel, for next iteration of loop */
 			channel->counters.pixel_counter++;

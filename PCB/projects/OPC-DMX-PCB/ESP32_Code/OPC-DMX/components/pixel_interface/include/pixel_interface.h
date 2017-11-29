@@ -231,4 +231,7 @@ bool pixel_convert_data(pixel_channel_config_t* channel);
  */
 IRAM_ATTR void pixel_intr_handler(void* arg);
 
+IRAM_ATTR void pixel_intr_handler_individual(pixel_channel_config_t* channel);
+
+
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */
