@@ -27,8 +27,8 @@ def map_range(value, OldMin, OldMax, NewMin,NewMax):
 
 class Cube(Device):
 
-    def __init__(self, origin=(0.0,0.0,0.0),width=5,height=5,gap=0.1,step=0.3, frame_period=1000, opc_ip='127.0.0.1:7890'):
-        Device.__init__(self,frame_period=frame_period, opc_ip=opc_ip)
+    def __init__(self, origin=(0.0,0.0,0.0),width=5,height=5,gap=0.1,step=0.3, frame_period=1000):
+        Device.__init__(self,frame_period=frame_period)
 
         xP = Panel(origin=(origin[0]+(width-1)*step, origin[1]-gap, origin[2]), colShift=(-step,0.0,0.0), rowShift=(0.0,0.0,-step), nPixelsWide=width, nPixelsHigh=height)
         yP = Panel(origin=(origin[0]+-gap, origin[1], origin[2]-(width-1)*step), colShift=(0.0,0.0,step), rowShift=(0.0,step,0.0), nPixelsWide=width, nPixelsHigh=height)
@@ -51,10 +51,14 @@ class Cube(Device):
         self.nPixels = len(self.pixels)
 
         self.d_animations = {}
-        self.d_animations['vu'] = animation.Vu_to_rows(self.Panels)
+        self.d_animations['Vu'] = animation.Vu_to_rows(self.Panels)
         self.d_animations['Shift'] = animation.Shift(self.Panels)
+        self.d_animations['Ring'] = animation.Vu_to_ring(self.Panels)
+        self.d_animations['Spiral'] = animation.Vu_to_spiral_out(self.Panels)
         
-        self.current_animation = self.d_animations['Shift']
+        
+
+        self.current_animation = self.d_animations['Vu']
 
         # self.current_animation = animation.Vu_to_rows(self.Panels)
         # return self.pixels
@@ -117,7 +121,7 @@ if __name__ == '__main__':
 
     ''' cube config '''
     audio_queue = Queue()
-    cube = Cube(origin=(0,0,0), frame_period=100, opc_ip=IP_PORT)
+    cube = Cube(origin=(0,0,0), frame_period=100)
     cube.daemon = True
     control_queue = cube.control_queue
     pixel_queue = cube.pixel_queue
@@ -149,6 +153,6 @@ if __name__ == '__main__':
         control_queue.put('get_colours')
         while pixel_queue.empty():
             time.sleep(.10)
-        client.put_pixels(pixel_queue.get(), channel=0)
+        client.put_pixels( pixel_queue.get(), channel=0)
         
 

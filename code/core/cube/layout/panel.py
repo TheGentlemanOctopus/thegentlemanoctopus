@@ -1,6 +1,6 @@
 import numpy as np
 import colorsys
-
+import math
 
 
 
@@ -11,7 +11,7 @@ class Pixel:
         self.location = location
         self.color = color
 
-    def set_color(self, color):
+    def set_colour(self, color):
         self.color = color
 
     
@@ -58,6 +58,9 @@ class PixelStrip:
         for pixel in self.pixels:
             pixel.color = col
 
+    def draw_line(self, x0, x1, col):
+        for x in xrange(x0,x1):
+            self.pixels[x].color = col
 
 
 class Panel:
@@ -67,6 +70,14 @@ class Panel:
         self.origin = origin
         self.nPixels = nPixelsWide * nPixelsHigh
         self.height = nPixelsHigh
+        self.width = nPixelsWide
+
+        self.width_odd = (self.width)%2
+        self.height_odd = (self.height)%2
+
+        self.width_centre = self.width/2.0
+        self.height_centre = self.width/2.0
+
         self.rowShift = rowShift
         self.row_it = 0
         self.hue = 1.
@@ -103,6 +114,9 @@ class Panel:
         for row in self.rows:
             row.clear_pixels()
 
+    def set_pixel(self,x,y):
+        self.rows[y].pixels[x].set_colour(self.colour)
+
     def set_colour(self,col=(0,0,0)):
         self.colour = col
         for row in self.rows:
@@ -116,13 +130,87 @@ class Panel:
         self.rows[self.row_it].set_colour(self.colour)
         self.row_it = (self.row_it+1)%self.height
 
-    def vu_to_rows(self,freq_chs):
+    def vu_to_rows(self,freq_chs,hues):
         i = 0
         for row in self.rows:
             for p in xrange(freq_chs[i]):
-                row.pixels[p].set_color((39, 232, 23))
+                # colorsys.hsv_to_rgb(self.hue, 1., self.val)
+                c = tuple([int(255*x) for x in colorsys.hsv_to_rgb(hues[i], 1., self.val)])   
+                row.pixels[p].set_colour(c)
             i+=1
     
+    def set_ring(self,level):
+        ''' will set a ring expanding outward '''
+        # print 'set_ring', level
+        # start at centre
+        # centre - level
+        x1 = int(math.floor(self.width_centre) - level)
+        x2 = int(math.ceil(self.width_centre) + level)
+        y1 = int(math.floor(self.height_centre) - level)
+        y2 = int(math.ceil(self.height_centre) + level)
+
+        # print x1,x2,y1,y2
+        self.draw_rect(x1,y1,x2,y2,col=self.colour)
+
+        # if level > 0:
+        #     pass
+
+        pass
+
+    def draw_rect(self, x1,y1,x2,y2,col=(0,0,0)):
+
+        for x in xrange(y1,y2):
+            self.rows[x].draw_line(x1,x2,col)
+
+    def draw_spiral_out(self,level):
+
+        target_pixel = int(level * self.nPixels)
+        # target_pixel = 12
+        # print level, target_pixel
+        # starting position
+        x = int(math.floor(self.width_centre))
+        y = int(math.floor(self.height_centre))     
+        self.set_pixel(x,y)
+        # itteration_map = [(1,0),(0,-1),(-1,0),(0,1)]
+        itteration_map = [(1,0),(0,1),(-1,0),(0,-1)]
+        count1 = 0
+        step = 1
+        it = 0
+        target = target_pixel-1
+
+        while(count1 < target):
+            ''' for x '''
+            for i in xrange(step):
+                # print x,y
+                x+=itteration_map[it][0]
+                y+=itteration_map[it][1]
+                # print '[X]',count1,':', x,y,it,itteration_map[it]
+                self.set_pixel(x,y)
+                count1+=1
+                if(count1 >= target):
+                    break
+            if(count1 >= target):
+                break
+            it=(it+1)%4
+
+            ''' for y '''
+            for i in xrange(step):
+                # print x,y
+                x+=itteration_map[it][0]
+                y+=itteration_map[it][1]
+                # print '[Y]',count1,':', x,y,it, itteration_map[it]
+                self.set_pixel(x,y)
+                count1+=1
+                if(count1 >= target):
+                    break
+            if(count1 >= target):
+                break
+            it=(it+1)%4
+
+            step+=1
+
+
+
 def printPixels(panel):
 
     for strips in panel.rows:

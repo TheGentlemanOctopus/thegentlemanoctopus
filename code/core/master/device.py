@@ -1,7 +1,7 @@
 import numpy as np
 from multiprocessing import Process, Queue
 import datetime
-
+import random
 # import opc
 
 '''
@@ -10,10 +10,11 @@ Inherit this class and overide the next frame method
 
 class Device(Process):
     ''' Represents a chromatophore in octopusLayout space'''
-    def __init__(self, frame_period=100, opc_ip='127.0.0.1:7890'):
+    def __init__(self, frame_period=100,animation_period=10):
         Process.__init__(self)
         ''' location is the coordinate of the pixel'''
         self.frame_period = frame_period
+        self.animation_period = animation_period
         self.audio_queue = Queue()
         self.pixel_queue = Queue()
         self.control_queue = Queue()
@@ -41,11 +42,14 @@ class Device(Process):
     def run(self):
 
         last_frame = datetime.datetime.now()
+        last_animation = datetime.datetime.now()
+
 
         while True:
             
             now = datetime.datetime.now()
             delta = (now-last_frame).total_seconds()*1000
+            delta_animation = (now-last_animation).total_seconds()
 
             ''' check queues '''
             self.check_audio_queue()
@@ -57,6 +61,13 @@ class Device(Process):
                 
                 ''' update animation '''
                 self.current_animation.next_frame(self.audio_data)
+
+            if delta_animation >= self.animation_period:
+                print 'Change animation'
+                last_animation = now
+                
+                ''' update animation '''
+                self.random_animation()
 
 
     def next_frame(self):
@@ -76,11 +87,13 @@ class Device(Process):
         if not self.control_queue.empty():
             msg = self.control_queue.get()
             if msg == 'get_colours':
-                self.pixel_queue.put(self.get_colours())
+                self.get_pixel_queue().put(self.get_colours())
             return msg
         else:
             return None
 
+    def random_animation(self):
+        self.current_animation = self.d_animations[random.choice(self.d_animations.keys())]
 
 
 if __name__ == '__main__':
