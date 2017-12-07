@@ -35,6 +35,8 @@ class Vu_to_rows(Cube_animation):
         for panel in self.Panels:
             panel.vu_to_rows(ch,hues)
 
+        # self.Panels[0].vu_to_rows(ch,hues)
+
 
     def clear_pixels(self):
         for panel in self.Panels:
@@ -69,7 +71,7 @@ class Vu_to_rows(Cube_animation):
 
 class Shift(Cube_animation):
 
-    def __init__(self, cube_panels, frame_period=10, name='vu_to_rows'):
+    def __init__(self, cube_panels, frame_period=100, name='vu_to_rows'):
         Cube_animation.__init__(self, cube_panels, frame_period=frame_period, name=name)
         self.hue = 0
 
@@ -117,6 +119,31 @@ class Shift(Cube_animation):
         #     self.Panels[2].shift_hue(0.06)
         # pass
 
+class Spin_cross(Cube_animation):
+
+    def __init__(self, cube_panels, frame_period=10, name='vu_to_rows'):
+        Cube_animation.__init__(self, cube_panels, frame_period=frame_period, name=name)
+        self.hue = 0
+
+    def next_frame(self, audio_data):
+        
+        self.clear_pixels()
+        self.set_hue()
+
+
+    def set_hue(self):
+        for panel in self.Panels:
+            panel.shift_hue()
+
+
+    def clear_pixels(self):
+        for panel in self.Panels:
+            panel.clear_pixels()
+
+
+
+    
+
 class Vu_to_ring(Cube_animation):
 
     def __init__(self, cube_panels, frame_period=10, name='vu_to_ring'):
@@ -144,6 +171,32 @@ class Vu_to_ring(Cube_animation):
         self.Panels[1].set_ring(ch[2])
         self.Panels[2].set_ring(ch[4])
 
+class Vu_to_rect(Cube_animation):
+
+    def __init__(self, cube_panels, frame_period=10, name='vu_to_ring'):
+        Cube_animation.__init__(self, cube_panels, frame_period=frame_period, name=name)
+        # print 'vu_to_ring'
+
+    def next_frame(self, audio_data):
+        # print 'vu to ring next frame'
+
+        for panel in self.Panels:
+            panel.clear_pixels()
+
+        self.Panels[0].shift_hue(step=0.01)
+        self.Panels[1].shift_hue(step=0.015)
+        self.Panels[2].shift_hue(step=0.025)
+
+        max_val = 3
+        threshold = 10
+        division = 8
+
+        ch = [max(min(int((i-threshold)/division), max_val), 0) for i in audio_data[:5] ]
+        # print audio_data[2], ch[2]
+
+        self.Panels[0].set_rect(ch[0])
+        self.Panels[1].set_rect(ch[2])
+        self.Panels[2].set_rect(ch[4])
 
 class Vu_to_spiral_out(Cube_animation):
 
@@ -172,5 +225,6 @@ class Vu_to_spiral_out(Cube_animation):
         self.Panels[0].draw_spiral_out(ch[0])
         self.Panels[1].draw_spiral_out(ch[2])
         self.Panels[2].draw_spiral_out(ch[4])
+
 
 

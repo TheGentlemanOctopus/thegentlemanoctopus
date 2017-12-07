@@ -39,7 +39,7 @@ class Fft(Process):
     host = 'localhost'
     port = '8000'
 
-    def __init__(self, datasize=2048,mic=None,debug=False,fname="../sounds/test.wav",frate=44100.0, output=False,threshold=17,stretch=4, dataqueue=None):
+    def __init__(self, datasize=2048,mic=None,debug=False,fname="../sounds/test.wav",frate=44100.0, output=False,threshold=17,stretch=4, dataqueues=None):
         Process.__init__(self)
 
         print "setup args"
@@ -47,7 +47,7 @@ class Fft(Process):
         self.stretch = stretch
         self.timeOfLastBeat = time.time()
         self.moodTime = self.timeOfLastBeat
-        self.queue = dataqueue
+        self.queues = dataqueues
 
         self.datasize=datasize
         self.mic=mic
@@ -386,7 +386,8 @@ class Fft(Process):
 
     def send_data(self,audiodata):
         # print 'send_data:', audiodata
-        self.queue.put(audiodata)
+        for q in self.queues:
+            q.put(audiodata)
         pass
 
 if __name__ == '__main__':

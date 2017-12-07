@@ -150,17 +150,41 @@ class Panel:
         y2 = int(math.ceil(self.height_centre) + level)
 
         # print x1,x2,y1,y2
+        # self.draw_rect_fill(x1,y1,x2,y2,col=self.colour)
         self.draw_rect(x1,y1,x2,y2,col=self.colour)
-
-        # if level > 0:
-        #     pass
 
         pass
 
-    def draw_rect(self, x1,y1,x2,y2,col=(0,0,0)):
+    def set_rect(self,level):
+        ''' will set a ring expanding outward '''
+        # print 'set_ring', level
+        # start at centre
+        # centre - level
+        x1 = int(math.floor(self.width_centre) - level)
+        x2 = int(math.ceil(self.width_centre) + level)
+        y1 = int(math.floor(self.height_centre) - level)
+        y2 = int(math.ceil(self.height_centre) + level)
+
+        # print x1,x2,y1,y2
+        self.draw_rect_fill(x1,y1,x2,y2,col=self.colour)
+
+        pass
+
+    def draw_rect_fill(self, x1,y1,x2,y2,col=(0,0,0)):
 
         for x in xrange(y1,y2):
             self.rows[x].draw_line(x1,x2,col)
+
+    def draw_rect(self, x1,y1,x2,y2,col=(0,0,0)):
+        print x1, y1, x2, y2
+        self.rows[y1].draw_line(x1,x2,col)
+
+        if y1 < y2:
+            for i in xrange(y1+1,y2):
+                self.rows[i].pixels[x1].set_colour(col)
+                self.rows[i].pixels[x2-1].set_colour(col)
+
+        self.rows[y2-1].draw_line(x1,x2,col)
 
     def draw_spiral_out(self,level):
 

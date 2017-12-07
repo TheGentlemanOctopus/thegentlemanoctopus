@@ -30,11 +30,38 @@ class Cube(Device):
     def __init__(self, origin=(0.0,0.0,0.0),width=5,height=5,gap=0.1,step=0.3, frame_period=1000):
         Device.__init__(self,frame_period=frame_period)
 
-        xP = Panel(origin=(origin[0]+(width-1)*step, origin[1]-gap, origin[2]), colShift=(-step,0.0,0.0), rowShift=(0.0,0.0,-step), nPixelsWide=width, nPixelsHigh=height)
-        yP = Panel(origin=(origin[0]+-gap, origin[1], origin[2]-(width-1)*step), colShift=(0.0,0.0,step), rowShift=(0.0,step,0.0), nPixelsWide=width, nPixelsHigh=height)
-        zP = Panel(origin=(origin[0]+0.0, origin[1]+(width-1)*step, origin[2]+gap), colShift=(0.0,-step,0.0), rowShift=(step,0.0,0.0), nPixelsWide=width, nPixelsHigh=height)
+        xP = Panel(
+            origin=(
+                origin[0], 
+                origin[1]-gap, 
+                origin[2]), 
+            colShift=(step,0.0,0.0), 
+            rowShift=(0.0,0.0,-step), 
+            nPixelsWide=width, 
+            nPixelsHigh=height)
+        yP = Panel(
+            origin=(
+                origin[0], 
+                origin[1], 
+                origin[2]+gap), 
+
+            colShift=(0.0,step,0.0), 
+            rowShift=(step,0.0,0.0), 
+            nPixelsWide=width, 
+            nPixelsHigh=height)
+        zP = Panel(
+            origin=(
+                origin[0]-gap, 
+                origin[1], 
+                origin[2]), 
+            colShift=(0.0,0.0,-step), 
+            rowShift=(0.0,step,0.0), 
+            nPixelsWide=width, 
+            nPixelsHigh=height)
+
         
         self.Panels = [xP,yP,zP]
+        # self.Panels = [xP]
 
         self.pixels = []
         self.colors = []
@@ -54,6 +81,7 @@ class Cube(Device):
         self.d_animations['Vu'] = animation.Vu_to_rows(self.Panels)
         self.d_animations['Shift'] = animation.Shift(self.Panels)
         self.d_animations['Ring'] = animation.Vu_to_ring(self.Panels)
+        self.d_animations['Rect'] = animation.Vu_to_rect(self.Panels)
         self.d_animations['Spiral'] = animation.Vu_to_spiral_out(self.Panels)
         
         
@@ -73,7 +101,37 @@ class Cube(Device):
             colours.extend(panel.get_colours())
         return colours
 
+def export(cube, filepath):
+    import os
+    import json
+    ''' Export octopus into a json file that is compatible with gl server and import '''
+    
+    # Include metadata in the first pixel object
+    # TODO: a bit hacky is there a better way?
+    pixel_d = [ {'point': pixel} for pixel in cube.pixels]
+    
+    # pixels[0]['metadata'] = {
+    #     'mantle_radius': self.mantle_radius,
+    #     'tentacle_length' : self.tentacle_length,
+    #     'pixels_per_strip': self.pixels_per_strip
+    # } 
+    print 'saving laout', filepath
+    # Dump to file
+    with open(os.path.join(os.path.dirname(__file__), filepath), 'w') as f:
+        f.write(json.dumps(pixel_d, indent=4))
+ 
+def exportPixels(pixels, filepath):
+    import os
+    import json
+    ''' Export octopus into a json file that is compatible with gl server and import '''
+    
+    pixel_d = [ {'point': pixel} for pixel in pixels]
+  
 
+    print 'saving laout', filepath
+    # Dump to file
+    with open(os.path.join(os.path.dirname(__file__), filepath), 'w') as f:
+        f.write(json.dumps(pixel_d, indent=4))
  
 
 
@@ -122,14 +180,35 @@ if __name__ == '__main__':
     ''' cube config '''
     audio_queue = Queue()
     cube = Cube(origin=(0,0,0), frame_period=100)
+    cube2 = Cube(origin=(5*.3,-(5*.3),0), frame_period=100)
+
+    print 'Before export'
+    filepath = 'cubesLayout2.json'
+    # export(cube,filepath)
+
+    # exportPixels(cube.pixels+cube2.pixels,filepath)
+
+    # pixels = []
+    # pixels += cube.pixels
+    # pixels += cube2.pixels
+    cube1_npixels = cube.nPixels
+    cube2_npixels = cube2.nPixels
+
     cube.daemon = True
     control_queue = cube.control_queue
     pixel_queue = cube.pixel_queue
     cube.start()
 
+
+    cube2.daemon = True
+    control_queue2 = cube2.control_queue
+    pixel_queue2 = cube2.pixel_queue
+    cube2.start()
+
     ''' FFT config '''
     mic = False
-    fft = Fft(datasize=data_size,mic=mic,debug=debug,fname=fname,frate=44100.0, output=True, dataqueue=cube.audio_queue)
+    audio_queues = [cube.audio_queue , cube2.audio_queue]
+    fft = Fft(datasize=data_size,mic=mic,debug=debug,fname=fname,frate=44100.0, output=True, dataqueues=audio_queues)
     fft.daemon = True
     fft.start()
 
@@ -145,14 +224,27 @@ if __name__ == '__main__':
     print('')
 
 
+    # while True:
 
-
-
-    while True:
-
-        control_queue.put('get_colours')
-        while pixel_queue.empty():
-            time.sleep(.10)
-        client.put_pixels( pixel_queue.get(), channel=0)
+    #     control_queue.put('get_colours')
+    #     while pixel_queue.empty():
+    #         time.sleep(.10)
+    #     client.put_pixels( pixel_queue.get(), channel=0)
         
 
+    while True:
+        pixels = []
+        control_queue.put('get_colours')
+        while pixel_queue.empty():
+            time.sleep(.01)
+        pixels += pixel_queue.get()
+
+        control_queue2.put('get_colours')
+        while pixel_queue2.empty():
+            time.sleep(.01)
+        pixels += pixel_queue2.get()
+        print len(pixels)
+        client.put_pixels( pixels, channel=0)
+        
+        time.sleep(1.0/20.0)
+        
