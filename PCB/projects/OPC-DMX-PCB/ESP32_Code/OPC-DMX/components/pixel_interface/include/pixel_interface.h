@@ -15,6 +15,7 @@
 
 #define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
 #define RMT_MEM_BLOCK_SIZE 64 /* There are 64 32bit addresses for each rmt channel*/
+#define PIXEL_MEM_BLOCK_SIZE 62 /* For some reason end interrupts wont get generated if this is 64 */
 
 #define RMT_DIVIDER 2 /* Divide the RMT APB clock by this */
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
@@ -214,24 +215,39 @@ void pixel_stop_channel(pixel_channel_config_t* channel);
 
 /**
  * @brief Pixel Send Data
+ * Uses Pixel Convert Data in a while loop to convert a strip of pixels
+ *
+ * @note This releases the semaphore to allow the pixel channel to update
+ *
+ * @param channel Pixel channel config structure
+ */
+void pixel_update_data(pixel_channel_config_t* channel);
+
+/**
+ * @brief Pixel Convert Data
  * Converts the channel.pixel_data into RMT 1 wire data
  * that will be sent out on the physical pins.
+ *
  *
  * @note This is called in pixel_start_channel
  *
  * @param channel Pixel channel config structure
  */
-void pixel_send_data(pixel_channel_config_t* channel);
-void pixel_send_data_multi_channel(pixel_channel_config_t** channels, uint8_t* index_queue, uint8_t index_count);
-bool pixel_convert_data(pixel_channel_config_t* channel);
+void pixel_convert_data(pixel_channel_config_t* channel);
+
 /**
- * @brief Pixel Intr Handler
- * Deals with the RMT interrupts and figures out what channel to fill next.
- * This should be a high priority interrupt to keep the pixels in sync
+ * @brief Pixel Intr Handler Half
+ * Handler for the RMT data half send interrupt
+ * Converts the data for the channel that fired this interrupt
+ *
  */
-IRAM_ATTR void pixel_intr_handler(void* arg);
+IRAM_ATTR void pixel_intr_handler_half(pixel_channel_config_t* channel);
 
-IRAM_ATTR void pixel_intr_handler_individual(pixel_channel_config_t* channel);
-
-
+/**
+ * @brief Pixel Intr Handler END
+ * Handler for the RMT data sent interrupt
+ * Currently doesn't really do anything
+ *
+ */
+IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel);
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */

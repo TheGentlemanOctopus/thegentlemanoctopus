@@ -53,14 +53,14 @@ esp_err_t pixel_test_init(void)
 	uint8_t number_of_channels = 8;
 	uint32_t led_lengths[PIXEL_CHANNEL_MAX] =
 	{
-			[PIXEL_CHANNEL_0] = 1000,
-			[PIXEL_CHANNEL_1] = 1000,
-			[PIXEL_CHANNEL_2] = 1000,
-			[PIXEL_CHANNEL_3] = 1000,
-			[PIXEL_CHANNEL_4] = 1000,
-			[PIXEL_CHANNEL_5] = 1000,
-			[PIXEL_CHANNEL_6] = 1000,
-			[PIXEL_CHANNEL_7] = 1000
+			[PIXEL_CHANNEL_0] = 2000,
+			[PIXEL_CHANNEL_1] = 2000,
+			[PIXEL_CHANNEL_2] = 2000,
+			[PIXEL_CHANNEL_3] = 2000,
+			[PIXEL_CHANNEL_4] = 2000,
+			[PIXEL_CHANNEL_5] = 2000,
+			[PIXEL_CHANNEL_6] = 2000,
+			[PIXEL_CHANNEL_7] = 2000
 	};
 
     for(uint8_t a = 0; a < number_of_channels; a++)
@@ -81,29 +81,32 @@ esp_err_t pixel_test_init(void)
 
 		sprintf(task_name, "CHANNEL %d", a);
 
-		xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, test_channel[a], 0, NULL, 1);
 		//pixel_start_channel(test_channel[a]);
 
     }
 
+    for(uint8_t a = 0; a < number_of_channels; a++)
+    {
+		xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, test_channel[a], 0, NULL, 0);
+    }
 
     uint8_t color = 0;
     uint8_t prev_color = 0;
     while (1){
 
-	    	for(uint8_t a = 0; a < number_of_channels; a++)
-	    	{
-			for (int i=0; i<test_channel[a]->channel_length; i++) {
-
-
-
-						test_channel[a]->pixel_data[i].r = Wheel(color+i*2).r;
-						test_channel[a]->pixel_data[i].g = Wheel(color+i*2).g;
-						test_channel[a]->pixel_data[i].b = Wheel(color+i*2).b;
-
-			}
-
-	    	}
+//	    	for(uint8_t a = 0; a < number_of_channels; a++)
+//	    	{
+//			for (int i=0; i<test_channel[a]->channel_length; i++) {
+//
+//
+//
+//						test_channel[a]->pixel_data[i].r = Wheel(color+i*2).r;
+//						test_channel[a]->pixel_data[i].g = Wheel(color+i*2).g;
+//						test_channel[a]->pixel_data[i].b = Wheel(color+i*2).b;
+//
+//			}
+//
+//	    	}
 	    	color++;
 			vTaskDelay(10/portTICK_PERIOD_MS);
 
