@@ -233,8 +233,9 @@ void pixel_update_data(pixel_channel_config_t* channel);
  *
  * @param channel Pixel channel config structure
  */
-void pixel_convert_data(pixel_channel_config_t* channel);
+bool pixel_convert_data(pixel_channel_config_t* channel);
 
+void pixel_end_channel(pixel_channel_config_t* channel);
 /**
  * @brief Pixel Intr Handler Half
  * Handler for the RMT data half send interrupt

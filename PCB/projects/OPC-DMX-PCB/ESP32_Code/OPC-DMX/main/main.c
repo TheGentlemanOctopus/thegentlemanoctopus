@@ -74,8 +74,8 @@ esp_err_t pixel_test_init(void)
 		/* load some dummy data */
 		for (uint32_t i = 0; i < test_channel[a]->channel_length; i++)
 		{
-			test_channel[a]->pixel_data[i].r = 0x00;
-			test_channel[a]->pixel_data[i].g = 0x00;
+			test_channel[a]->pixel_data[i].r = 0x06;
+			test_channel[a]->pixel_data[i].g = 0x03;
 			test_channel[a]->pixel_data[i].b = 0x01;
 		}
 
