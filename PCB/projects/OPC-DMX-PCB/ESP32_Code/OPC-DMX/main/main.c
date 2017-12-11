@@ -50,10 +50,10 @@ esp_err_t pixel_test_init(void)
 
     pixel_channel_config_t* test_channel[PIXEL_CHANNEL_MAX];
 	char task_name[10];
-	uint8_t number_of_channels = 8;
+	uint8_t number_of_channels = 1;
 	uint32_t led_lengths[PIXEL_CHANNEL_MAX] =
 	{
-			[PIXEL_CHANNEL_0] = 2000,
+			[PIXEL_CHANNEL_0] = 477,
 			[PIXEL_CHANNEL_1] = 2000,
 			[PIXEL_CHANNEL_2] = 2000,
 			[PIXEL_CHANNEL_3] = 2000,
@@ -74,21 +74,22 @@ esp_err_t pixel_test_init(void)
 		/* load some dummy data */
 		for (uint32_t i = 0; i < test_channel[a]->channel_length; i++)
 		{
-			test_channel[a]->pixel_data[i].r = 0x06;
-			test_channel[a]->pixel_data[i].g = 0x03;
+			test_channel[a]->pixel_data[i].r = 0x00;
+			test_channel[a]->pixel_data[i].g = 0x00;
 			test_channel[a]->pixel_data[i].b = 0x01;
 		}
 
 		sprintf(task_name, "CHANNEL %d", a);
 
 		//pixel_start_channel(test_channel[a]);
+		xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, test_channel[a], 5, NULL, 0);
 
     }
 
-    for(uint8_t a = 0; a < number_of_channels; a++)
-    {
-		xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, test_channel[a], 0, NULL, 0);
-    }
+//    for(uint8_t a = 0; a < number_of_channels; a++)
+//    {
+//		xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, test_channel[a], 5, NULL, 0);
+//    }
 
     uint8_t color = 0;
     uint8_t prev_color = 0;

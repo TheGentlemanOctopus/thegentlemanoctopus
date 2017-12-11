@@ -228,8 +228,7 @@ void pixel_update_data(pixel_channel_config_t* channel);
  * Converts the channel.pixel_data into RMT 1 wire data
  * that will be sent out on the physical pins.
  *
- *
- * @note This is called in pixel_start_channel
+ * @note This is called in pixel_start_channel and on interrupts
  *
  * @param channel Pixel channel config structure
  */
