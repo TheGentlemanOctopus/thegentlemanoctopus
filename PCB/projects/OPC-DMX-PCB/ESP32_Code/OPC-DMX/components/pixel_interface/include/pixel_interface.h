@@ -205,6 +205,8 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel);
  */
 void pixel_start_channel(pixel_channel_config_t* channel);
 
+void pixel_start_rmt_loop_mode(pixel_channel_config_t* channel);
+void pixel_stop_rmt_loop_mode(pixel_channel_config_t* channel);
 /**
  * @brief Pixel Stop Channel
  * Stops the pixel channel sending out data.
@@ -250,4 +252,6 @@ IRAM_ATTR void pixel_intr_handler_half(pixel_channel_config_t* channel);
  *
  */
 IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel);
+
+IRAM_ATTR void pixel_intr_handler(pixel_channel_config_t* channel);
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */
