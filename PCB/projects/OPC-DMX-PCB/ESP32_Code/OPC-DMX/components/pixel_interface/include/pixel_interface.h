@@ -15,7 +15,6 @@
 
 #define RMT_MEM_BLOCK_NUM 1 /* 1 block of data per channel */
 #define RMT_MEM_BLOCK_SIZE 64 /* There are 64 32bit addresses for each rmt channel*/
-#define PIXEL_MEM_BLOCK_SIZE 62 /* For some reason end interrupts wont get generated if this is 64 */
 
 #define RMT_DIVIDER 2 /* Divide the RMT APB clock by this */
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
@@ -205,8 +204,6 @@ void pixel_delete_data_buffer(pixel_channel_config_t* channel);
  */
 void pixel_start_channel(pixel_channel_config_t* channel);
 
-void pixel_start_rmt_loop_mode(pixel_channel_config_t* channel);
-void pixel_stop_rmt_loop_mode(pixel_channel_config_t* channel);
 /**
  * @brief Pixel Stop Channel
  * Stops the pixel channel sending out data.
@@ -216,10 +213,10 @@ void pixel_stop_rmt_loop_mode(pixel_channel_config_t* channel);
 void pixel_stop_channel(pixel_channel_config_t* channel);
 
 /**
- * @brief Pixel Send Data
- * Uses Pixel Convert Data in a while loop to convert a strip of pixels
+ * @brief Pixel Update Data
+ * Releases the start semaphore for the pixel channel to update the pixels with new data
  *
- * @note This releases the semaphore to allow the pixel channel to update
+ * @note Call after changing the RGB data to send it out to the pixels
  *
  * @param channel Pixel channel config structure
  */
@@ -236,7 +233,17 @@ void pixel_update_data(pixel_channel_config_t* channel);
  */
 bool pixel_convert_data(pixel_channel_config_t* channel);
 
+/**
+ * @brief Pixel Convert Data
+ * Converts the channel.pixel_data into RMT 1 wire data
+ * that will be sent out on the physical pins.
+ *
+ * @note This is called in pixel_start_channel and on interrupts
+ *
+ * @param channel Pixel channel config structure
+ */
 void pixel_end_channel(pixel_channel_config_t* channel);
+
 /**
  * @brief Pixel Intr Handler Half
  * Handler for the RMT data half send interrupt
@@ -248,10 +255,9 @@ IRAM_ATTR void pixel_intr_handler_half(pixel_channel_config_t* channel);
 /**
  * @brief Pixel Intr Handler END
  * Handler for the RMT data sent interrupt
- * Currently doesn't really do anything
+ * Cleans up the channel and signals that it's stopped sending by releasing a semaphore
  *
  */
 IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel);
 
-IRAM_ATTR void pixel_intr_handler(pixel_channel_config_t* channel);
 #endif /* COMPONENTS_PIXEL_INTERFACE_INCLUDE_PIXEL_INTERFACE_H_ */
