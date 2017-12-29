@@ -49,42 +49,43 @@ esp_err_t pixel_test_init(void)
 {
 
     pixel_channel_config_t* test_channel[PIXEL_CHANNEL_MAX];
-	uint8_t number_of_channels = 5;
+	uint8_t number_of_channels = 8;
 	uint32_t led_lengths[PIXEL_CHANNEL_MAX] =
 	{
-			[PIXEL_CHANNEL_0] = 1000,
-			[PIXEL_CHANNEL_1] = 1000,
-			[PIXEL_CHANNEL_2] = 1000,
-			[PIXEL_CHANNEL_3] = 1000,
-			[PIXEL_CHANNEL_4] = 1000,
-			[PIXEL_CHANNEL_5] = 1000,
-			[PIXEL_CHANNEL_6] = 1000,
-			[PIXEL_CHANNEL_7] = 1000
+			[PIXEL_CHANNEL_0] = 175,
+			[PIXEL_CHANNEL_1] = 175,
+			[PIXEL_CHANNEL_2] = 175,
+			[PIXEL_CHANNEL_3] = 175,
+			[PIXEL_CHANNEL_4] = 175,
+			[PIXEL_CHANNEL_5] = 175,
+			[PIXEL_CHANNEL_6] = 175,
+			[PIXEL_CHANNEL_7] = 175
 	};
 
     for(uint8_t a = 0; a < number_of_channels; a++)
     {
 
-    		test_channel[a] = pixel_generate_channel_conf((pixel_channel_t)a, led_lengths[a], PIXEL_WS2812_V1);
+    		test_channel[a] = pixel_generate_channel_conf((pixel_channel_t)a, led_lengths[a], PIXEL_WS2812B_V1);
 
 		pixel_init_channel(test_channel[a]);
     }
 
     uint8_t color = 0;
     while (1){
-
 	    	for(uint8_t a = 0; a < number_of_channels; a++)
 	    	{
-			for (int i=0; i<test_channel[a]->channel_length; i++) {
+	    		/*Wait for semaphore to signal pixel data is able to be updated*/
+//	    		xSemaphoreTake(test_channel[a]->xPixelSemaphoreData, portMAX_DELAY);
+
+			for (uint32_t i=0; i<test_channel[a]->channel_length; i++) {
 
 
-
-						test_channel[a]->pixel_data[i].r = Wheel(color+i*2).r;
-						test_channel[a]->pixel_data[i].g = Wheel(color+i*2).g;
-						test_channel[a]->pixel_data[i].b = Wheel(color+i*2).b;
-
+						test_channel[a]->pixel_data[i].r = Wheel(color).r;
+						test_channel[a]->pixel_data[i].g = Wheel(color).g;
+						test_channel[a]->pixel_data[i].b = Wheel(color).b;
 			}
-
+			/*Give semaphore so that the pixel data is able to be sent*/
+//			xSemaphoreGive(test_channel[a]->xPixelSemaphoreData);
 
 	    	}
 	    	for(uint8_t a = 0; a < number_of_channels; a++)

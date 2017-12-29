@@ -32,13 +32,6 @@ static const char* PIXEL_TAG = "pixel";
 /* Global semaphores for control of the pixels */
 /* Channel semaphore, for making sure only the desired number of channels are sending at once */
 SemaphoreHandle_t xPixelSemaphoreChannel;
-/* Start semaphore, for signalling that we want the channel to start sending */
-SemaphoreHandle_t xPixelSemaphoreStart[PIXEL_CHANNEL_MAX];
-/* Channel Ready semaphore, for signalling that the channel is able to start sending */
-SemaphoreHandle_t xPixelSemaphoreChannelReady[PIXEL_CHANNEL_MAX];
-
-/* Store of handles for the RMT interrupt handler. Should be indexed by the pixel channels RMT_channel number*/
-pixel_channel_config_t* pixel_rmt_handles[RMT_CHANNEL_MAX];
 
 /**
  * Definitions of the type of pixels from various datasheets.
@@ -50,7 +43,14 @@ const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
 			.pixel_bit[PIXEL_BIT_HIGH] = { .level0 = 1, .duration0 = 700/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 600/RMT_CLK_DIVIDER},
 			.reset = 50000/RMT_CLK_DIVIDER,
 			.colour_num = 3
+	},
+	[PIXEL_WS2812B_V1] = {
+			.pixel_bit[PIXEL_BIT_lOW] = { .level0 = 1, .duration0 = 400/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 800/RMT_CLK_DIVIDER},
+			.pixel_bit[PIXEL_BIT_HIGH] = { .level0 = 1, .duration0 = 850/RMT_CLK_DIVIDER, .level1 = 0, .duration1 = 450/RMT_CLK_DIVIDER},
+			.reset = 50000/RMT_CLK_DIVIDER,
+			.colour_num = 3
 	}
+
 };
 
 /**
@@ -59,10 +59,10 @@ const pixel_type_t pixel_type_lookup[PIXEL_NAME_MAX] = {
  */
 const gpio_num_t pixel_gpio[PIXEL_CHANNEL_MAX] = {
 		[PIXEL_CHANNEL_0] = GPIO_NUM_2,
-		[PIXEL_CHANNEL_1] = GPIO_NUM_5,
-		[PIXEL_CHANNEL_2] = GPIO_NUM_4,
-		[PIXEL_CHANNEL_3] = GPIO_NUM_19,
-		[PIXEL_CHANNEL_4] = GPIO_NUM_18,
+		[PIXEL_CHANNEL_1] = GPIO_NUM_4,
+		[PIXEL_CHANNEL_2] = GPIO_NUM_5,
+		[PIXEL_CHANNEL_3] = GPIO_NUM_18,
+		[PIXEL_CHANNEL_4] = GPIO_NUM_19,
 		[PIXEL_CHANNEL_5] = GPIO_NUM_22,
 		[PIXEL_CHANNEL_6] = GPIO_NUM_21,
 		[PIXEL_CHANNEL_7] = GPIO_NUM_23
@@ -83,8 +83,8 @@ pixel_channel_config_t* pixel_generate_channel_conf(pixel_channel_t pixel_channe
 
 	channel->pixel_type = pixel_type_lookup[pixel_type];
 
-	/* Create a semaphore to make sure only 4 of the channels can work at at time */
-	xPixelSemaphoreChannel = xSemaphoreCreateCounting(4, 4);
+	/* Create a semaphore to make sure only some of the channels can work at at time */
+	xPixelSemaphoreChannel = xSemaphoreCreateCounting(PIXEL_MAX_CHANNEL_SEND, PIXEL_MAX_CHANNEL_SEND);
 	return channel;
 }
 
@@ -101,10 +101,11 @@ void pixel_init_channel(pixel_channel_config_t* channel)
 	esp_intr_alloc_intrstatus(ETS_RMT_INTR_SOURCE, ESP_INTR_FLAG_SHARED, (uint32_t)&RMT.int_st.val, BIT((channel->rmt_channel + 24)), pixel_intr_handler_half, channel, NULL);
 	esp_intr_alloc_intrstatus(ETS_RMT_INTR_SOURCE, ESP_INTR_FLAG_SHARED, (uint32_t)&RMT.int_st.val, BIT((channel->rmt_channel * 3)), pixel_intr_handler_end, channel, NULL);
 
-	/* Create semaphore for updating the pixel channels */
-	xPixelSemaphoreStart[channel->pixel_channel] = xSemaphoreCreateBinary();
+	/* Create semaphores updating the pixel channels */
+	channel->xPixelSemaphoreStart = xSemaphoreCreateBinary();
+	channel->xPixelSemaphoreChannelReady = xSemaphoreCreateBinary();
+	channel->xPixelSemaphoreData = xSemaphoreCreateBinary();
 
-	xPixelSemaphoreChannelReady[channel->pixel_channel] = xSemaphoreCreateBinary();
 	sprintf(task_name, "CHANNEL %d", channel->pixel_channel);
 	xTaskCreatePinnedToCore(pixel_start_channel, task_name, 10000, channel, 5, NULL, 1);
 
@@ -184,11 +185,16 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 	ESP_LOGD(PIXEL_TAG,"Pixel Channel Started %d\n", channel->pixel_channel);
 
 	/* Signal that the channel is ready to send data */
-	xSemaphoreGive(xPixelSemaphoreChannelReady[channel->pixel_channel]);
+	xSemaphoreGive(channel->xPixelSemaphoreChannelReady);
+	/* Signal that the pixel data is ready to be updated */
+	xSemaphoreGive(channel->xPixelSemaphoreData);
 	for(;;)
 	{
 		/*Wait for semaphore to update the pixel data */
-		xSemaphoreTake(xPixelSemaphoreStart[channel->pixel_channel], portMAX_DELAY);
+		xSemaphoreTake(channel->xPixelSemaphoreStart, portMAX_DELAY);
+
+		/*Wait for semaphore to make sure the data isn't still being updated*/
+		xSemaphoreTake(channel->xPixelSemaphoreData, portMAX_DELAY);
 
 		/*Wait for semaphore to allow the channel to send data */
 		xSemaphoreTake(xPixelSemaphoreChannel, portMAX_DELAY);
@@ -212,7 +218,6 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 		rmt_set_tx_intr_en(channel->rmt_channel, true);
 		/* Set an interrupt to fire every half block */
 		rmt_set_tx_thr_intr_en(channel->rmt_channel, true, RMT_MEM_BLOCK_SIZE/2);
-
 		/* Start continuously sending out the RMT data */
 		rmt_tx_start(channel->rmt_channel, true);
 
@@ -222,10 +227,10 @@ void pixel_start_channel(pixel_channel_config_t* channel)
 void pixel_update_data(pixel_channel_config_t* channel)
 {
 	/*Wait for semaphore to signal channel is ready to send more pixel data */
-	xSemaphoreTake(xPixelSemaphoreChannelReady[channel->pixel_channel], portMAX_DELAY);
+	xSemaphoreTake(channel->xPixelSemaphoreChannelReady, portMAX_DELAY);
 
 	/* Release the semaphore that starts the pixels sending */
-	xSemaphoreGive(xPixelSemaphoreStart[channel->pixel_channel]);
+	xSemaphoreGive(channel->xPixelSemaphoreStart);
 }
 
 IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel)
@@ -241,7 +246,11 @@ IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel)
 	/* Give a semaphore to signal the channel is sent and another can do it now*/
 	xSemaphoreGiveFromISR(xPixelSemaphoreChannel, &xHigherPriorityTaskWoken);
 	/* Signal that the channel is ready to send data again*/
-	xSemaphoreGiveFromISR(xPixelSemaphoreChannelReady[channel->pixel_channel], &xHigherPriorityTaskWoken);
+	xSemaphoreGiveFromISR(channel->xPixelSemaphoreChannelReady, &xHigherPriorityTaskWoken);
+	/* Signal that the data can be updated */
+	xSemaphoreGiveFromISR(channel->xPixelSemaphoreData, &xHigherPriorityTaskWoken);
+
+
 	portYIELD_FROM_ISR();
 
 	/* toggle a pin for debug */
@@ -254,23 +263,14 @@ IRAM_ATTR void pixel_intr_handler_end(pixel_channel_config_t* channel)
 
 IRAM_ATTR void pixel_intr_handler_half(pixel_channel_config_t* channel)
 {
-	static bool channel_end_state[PIXEL_CHANNEL_MAX] =
-	{false, false, false, false, false, false, false, false};
+
 	static uint8_t tx_thr_stat = 0;
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
 	gpio_set_level(GPIO_NUM_27, tx_thr_stat);
 
-	/* Send the next half of the data if the previous convert wasn't at the end of the channel*/
-	if (channel_end_state[channel->pixel_channel] == false)
-	{
-		channel_end_state[channel->pixel_channel] = pixel_convert_data(channel);
-
-	} else if (channel_end_state[channel->pixel_channel] == true){
-		/* Do the end of channel routines, disable interrupts etc */
-		pixel_end_channel(channel);
-		channel_end_state[channel->pixel_channel] = false;
-	}
+	/* Send the next half of the data*/
+	pixel_convert_data(channel);
 
 	/* toggle a pin for debug */
 	tx_thr_stat ^= 0x01;
@@ -283,10 +283,12 @@ IRAM_ATTR void pixel_intr_handler_half(pixel_channel_config_t* channel)
 
 IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
 {
+
 	/* This function will be used to write pixel data into the RMT buffer */
 	/* Bit to index the RGB to RMT data */
 	uint8_t pixel_bit;
-
+	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
+	taskENTER_CRITICAL(&myMutex);
 	/* Unlimited loop for converting pixels in the channel length until either RMT buffer full
 	 * or at the end of a pixel strip
 	 */
@@ -333,7 +335,7 @@ IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
 				/* Zero pixel counters to start sending pixels all over again*/
 				channel->counters.pixel_counter = 0;
 
-				if (channel->counters.rmt_counter < channel->counters.rmt_block_max)
+				if (channel->counters.rmt_counter < RMT_MEM_BLOCK_SIZE)
 				{
 					/* If we're not at the last RMT block then set the next data block to be 0 so that the RMT will stop */
 					channel->rmt_mem_block[channel->counters.rmt_counter].val = 0;
@@ -342,17 +344,10 @@ IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
 					channel->rmt_mem_block[0].val = 0;
 				}
 
-				/* Check what setting the RMT block max is in */
-				if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE/2)
-				{
-					/* If we are currently filling the first half of the block
-					 * we need to wait until we loop around to disable the interrupts
-					 * return true to signal that we need the interrupts disabled
-					 */
-					return true;
-				}
 				/* Do the end of channel routines, disable interrupts etc */
 				pixel_end_channel(channel);
+
+				taskEXIT_CRITICAL(&myMutex);
 				/* Return false to signal that we don't need the interrupts to be disabled */
 				return false;
 
@@ -363,24 +358,41 @@ IRAM_ATTR bool pixel_convert_data(pixel_channel_config_t* channel)
 
 		}
 
-		/* If the RMT counter caused the loop to break, then update the RMT_block max for next time */
-		if (channel->counters.rmt_counter >= channel->counters.rmt_block_max)
+		if (pixel_check_rmt_counter(channel))
 		{
-			/* Check what setting the RMT block max is in */
-			if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE)
-			{
-				/* Reset to 0 and set the next iteration to go to half of a block */
-				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE/2;
-				channel->counters.rmt_counter = 0;
-			} else {
-				channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
-			}
-
-			/* Return false to avoid overflowing the buffer and signal
-			 * that we don't need the interrupts to be disabled*/
+			/* Because the RMT counter has been reset we have reached the end of the
+			 * RMT limit and we should stop filling the data.
+			 *
+			 * Return false to avoid overflowing the buffer and signal
+			 * that we don't need the interrupts to be disabled
+			 */
+			taskEXIT_CRITICAL(&myMutex);
 			return false;
 		}
 	}
+
+}
+
+bool pixel_check_rmt_counter(pixel_channel_config_t* channel)
+{
+	/* If the RMT counter caused the loop to break, then update the RMT_block max for next time */
+	if (channel->counters.rmt_counter >= channel->counters.rmt_block_max)
+	{
+		/* Check what setting the RMT block max is in */
+		if (channel->counters.rmt_block_max == RMT_MEM_BLOCK_SIZE)
+		{
+			/* Reset to 0 and set the next iteration to go to half of a block */
+			channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE/2;
+			channel->counters.rmt_counter = 0;
+		} else {
+			channel->counters.rmt_block_max = RMT_MEM_BLOCK_SIZE;
+		}
+
+		/* Return true to signal that the buffer has been reset */
+		return true;
+	}
+
+	return false;
 }
 
 void pixel_end_channel(pixel_channel_config_t* channel)

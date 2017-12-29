@@ -2,8 +2,8 @@
  * pixel_interface.h
  *
  *  Created on: 20 Sep 2017
- *      Author: Ben Holden
- *      The Gentleman Octopus Ltd
+ *  Author: Ben Holden
+ *  The Gentleman Octopus Ltd
  *
  */
 
@@ -20,6 +20,8 @@
 #define RMT_SPEED 12.5 /* APB Clock 1/80MHZ in nanoseconds */
 #define RMT_CLK_DIVIDER (RMT_SPEED * RMT_DIVIDER)
 
+#define PIXEL_MAX_CHANNEL_SEND 4 /* Max number of channels that can send at a time*/
+
 #define PIXEL_BIT_MASK 0x00000001 /* mask used for determining if a bit is a 1 or 0 */
 
 #define RMT_BUFFER_FULL 0xFF
@@ -33,9 +35,9 @@
 typedef enum {
     PIXEL_CHANNEL_0=0, /*!< Pixel Channel0 */
     PIXEL_CHANNEL_1,   /*!< Pixel Channel1 */
+    PIXEL_CHANNEL_2,   /*!< Pixel Channel2 */
     PIXEL_CHANNEL_3,   /*!< Pixel Channel3 */
     PIXEL_CHANNEL_4,   /*!< Pixel Channel4 */
-    PIXEL_CHANNEL_2,   /*!< Pixel Channel2 */
     PIXEL_CHANNEL_5,   /*!< Pixel Channel5 */
     PIXEL_CHANNEL_6,   /*!< Pixel Channel6 */
     PIXEL_CHANNEL_7,   /*!< Pixel Channel7 */
@@ -125,6 +127,9 @@ typedef struct {
 	pixel_data_t* pixel_data; /* Pointer to pixel data */
 	pixel_type_t pixel_type; /* Pixel types, eg WS2812 */
 	pixel_counter_t counters; /* Counters for the pixel to RMT conversions */
+	SemaphoreHandle_t xPixelSemaphoreData; /* Used for locking the data when sending*/
+	SemaphoreHandle_t xPixelSemaphoreChannelReady;	/* Channel Ready semaphore, for signalling that the channel is able to start sending */
+	SemaphoreHandle_t xPixelSemaphoreStart;/* Start semaphore, for signalling that we want the channel to start sending */
 } pixel_channel_config_t;
 
 /**
@@ -217,6 +222,7 @@ void pixel_stop_channel(pixel_channel_config_t* channel);
  * Releases the start semaphore for the pixel channel to update the pixels with new data
  *
  * @note Call after changing the RGB data to send it out to the pixels
+ * This function will block until channel is ready to send out more data
  *
  * @param channel Pixel channel config structure
  */
@@ -232,6 +238,8 @@ void pixel_update_data(pixel_channel_config_t* channel);
  * @param channel Pixel channel config structure
  */
 bool pixel_convert_data(pixel_channel_config_t* channel);
+
+bool pixel_check_rmt_counter(pixel_channel_config_t* channel);
 
 /**
  * @brief Pixel Convert Data
